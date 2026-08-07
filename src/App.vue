@@ -1,5 +1,9 @@
 <script setup lang="ts">
 import { RouterLink, RouterView } from 'vue-router';
+import { isMobileDevice } from '@/lib/device';
+
+// La segnalazione è disponibile solo su mobile (fotocamera + posizione).
+const canReport = isMobileDevice();
 </script>
 
 <template>
@@ -23,6 +27,7 @@ import { RouterLink, RouterView } from 'vue-router';
           Mappa
         </RouterLink>
         <RouterLink
+          v-if="canReport"
           to="/segnala"
           class="btn"
         >
