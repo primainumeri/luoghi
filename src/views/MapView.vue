@@ -11,9 +11,25 @@ import type { Place } from '@/lib/types';
 const DEFAULT_CENTER: [number, number] = [15.4783, 40.0783];
 const DEFAULT_ZOOM = 13;
 
-// Style demo di MapLibre come fallback se non è configurato un provider tile.
-const FALLBACK_STYLE = 'https://demotiles.maplibre.org/style.json';
-const styleUrl = import.meta.env.VITE_MAP_STYLE_URL || FALLBACK_STYLE;
+// Sfondo OpenStreetMap (raster tiles) come default.
+const OSM_STYLE: maplibregl.StyleSpecification = {
+  version: 8,
+  sources: {
+    osm: {
+      type: 'raster',
+      tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+      tileSize: 256,
+      maxzoom: 19,
+      attribution:
+        '\u00a9 <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    },
+  },
+  layers: [{ id: 'osm', type: 'raster', source: 'osm' }],
+};
+
+// Se è configurato uno style esterno lo usiamo, altrimenti OpenStreetMap.
+const style: string | maplibregl.StyleSpecification =
+  import.meta.env.VITE_MAP_STYLE_URL || OSM_STYLE;
 
 const router = useRouter();
 const mapContainer = ref<HTMLDivElement | null>(null);
@@ -71,13 +87,25 @@ onMounted(() => {
   if (!mapContainer.value) return;
   const m = new maplibregl.Map({
     container: mapContainer.value,
-    style: styleUrl,
+    style,
     center: DEFAULT_CENTER,
     zoom: DEFAULT_ZOOM,
   });
   m.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
+
+  // Recupera automaticamente la posizione dal dispositivo (telefono).
+  const geolocate = new maplibregl.GeolocateControl({
+    positionOptions: { enableHighAccuracy: true },
+    trackUserLocation: true,
+    showUserLocation: true,
+  });
+  m.addControl(geolocate, 'top-right');
+
   map.value = m;
-  m.on('load', loadPlaces);
+  m.on('load', () => {
+    loadPlaces();
+    geolocate.trigger();
+  });
 });
 
 onBeforeUnmount(() => {
