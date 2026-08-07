@@ -21,15 +21,47 @@ const OSM_STYLE: maplibregl.StyleSpecification = {
       tileSize: 256,
       maxzoom: 19,
       attribution:
-        '\u00a9 <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     },
   },
   layers: [{ id: 'osm', type: 'raster', source: 'osm' }],
 };
 
-// Se è configurato uno style esterno lo usiamo, altrimenti OpenStreetMap.
-const style: string | maplibregl.StyleSpecification =
-  import.meta.env.VITE_MAP_STYLE_URL || OSM_STYLE;
+// Sfondo ibrido: satellite Esri World Imagery + etichette (confini e località).
+// MapLibre non può usare le tile di Google (vincoli tecnici e di licenza):
+// Esri World Imagery è gratuito e non richiede chiave.
+const HYBRID_STYLE: maplibregl.StyleSpecification = {
+  version: 8,
+  sources: {
+    'esri-imagery': {
+      type: 'raster',
+      tiles: [
+        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      ],
+      tileSize: 256,
+      maxzoom: 19,
+      attribution: 'Imagery © Esri, Maxar, Earthstar Geographics',
+    },
+    'esri-labels': {
+      type: 'raster',
+      tiles: [
+        'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
+      ],
+      tileSize: 256,
+      maxzoom: 19,
+      attribution: '© Esri',
+    },
+  },
+  layers: [
+    { id: 'esri-imagery', type: 'raster', source: 'esri-imagery' },
+    { id: 'esri-labels', type: 'raster', source: 'esri-labels' },
+  ],
+};
+
+// Se è configurato uno style esterno lo usiamo e nascondiamo il selettore.
+const externalStyle = import.meta.env.VITE_MAP_STYLE_URL as string | undefined;
+const canToggleBase = !externalStyle;
+const baseMode = ref<'osm' | 'hybrid'>('osm');
 
 const router = useRouter();
 const mapContainer = ref<HTMLDivElement | null>(null);
@@ -39,6 +71,15 @@ const markers: maplibregl.Marker[] = [];
 const loading = ref(true);
 const error = ref<string | null>(null);
 const places = ref<Place[]>([]);
+
+function setBase(mode: 'osm' | 'hybrid') {
+  if (!canToggleBase || baseMode.value === mode) return;
+  baseMode.value = mode;
+  const m = map.value;
+  if (!m) return;
+  // I marker sono elementi DOM (non parte dello style): restano dopo setStyle.
+  m.setStyle(mode === 'hybrid' ? HYBRID_STYLE : OSM_STYLE);
+}
 
 function addMarkers(list: Place[]) {
   for (const marker of markers.splice(0)) {
@@ -87,7 +128,7 @@ onMounted(() => {
   if (!mapContainer.value) return;
   const m = new maplibregl.Map({
     container: mapContainer.value,
-    style,
+    style: externalStyle || OSM_STYLE,
     center: DEFAULT_CENTER,
     zoom: DEFAULT_ZOOM,
   });
@@ -143,6 +184,28 @@ onBeforeUnmount(() => {
     </p>
 
     <div
+      v-if="canToggleBase"
+      class="map-view__base-toggle"
+      role="group"
+      aria-label="Tipo di mappa"
+    >
+      <button
+        type="button"
+        :class="{ 'is-active': baseMode === 'osm' }"
+        @click="setBase('osm')"
+      >
+        Mappa
+      </button>
+      <button
+        type="button"
+        :class="{ 'is-active': baseMode === 'hybrid' }"
+        @click="setBase('hybrid')"
+      >
+        Ibrida
+      </button>
+    </div>
+
+    <div
       ref="mapContainer"
       class="map-view__canvas"
       role="application"
@@ -178,6 +241,35 @@ onBeforeUnmount(() => {
 .map-view__status--error {
   border-color: var(--color-danger);
   color: var(--color-danger);
+}
+
+.map-view__base-toggle {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 5;
+  display: inline-flex;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+}
+
+.map-view__base-toggle button {
+  border: 0;
+  background: var(--color-bg);
+  padding: 0.4rem 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.map-view__base-toggle button + button {
+  border-left: 1px solid var(--color-border);
+}
+
+.map-view__base-toggle button.is-active {
+  background: var(--color-brand);
+  color: #fff;
 }
 
 .visually-hidden {

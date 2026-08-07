@@ -11,7 +11,7 @@ export interface SubmissionInput {
   lat: number;
   locationLabel?: string;
   firstObserved?: string;
-  email: string;
+  email?: string;
   consent: boolean;
   honeypot?: string;
   // Percorsi delle foto già caricate nel bucket privato `pending-media` (max 3).
@@ -38,7 +38,7 @@ export async function submitReport(input: SubmissionInput): Promise<string> {
     p_lat: input.lat,
     p_location_label: input.locationLabel ?? null,
     p_first_observed: input.firstObserved ?? null,
-    p_email: input.email,
+    p_email: input.email && input.email.trim() !== '' ? input.email.trim() : '',
     p_consent: input.consent,
     p_media_paths: input.mediaPaths ?? [],
   });
