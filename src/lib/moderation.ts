@@ -10,18 +10,43 @@ export interface QueueItem {
   proposal: string | null;
   location_label: string | null;
   created_at: string;
+  lng: number;
+  lat: number;
+  mediaUrls?: string[];
 }
 
 // Coda privata delle segnalazioni ricevute (visibile solo ai moderatori via RLS).
 export async function fetchQueue(): Promise<QueueItem[]> {
   const { data, error } = await supabase
-    .from('submissions')
-    .select('id, title, description, type, category_id, proposal, location_label, created_at')
+    .from('submissions_queue')
+    .select(
+      'id, title, description, type, category_id, proposal, location_label, created_at, lng, lat',
+    )
     .eq('internal_status', 'ricevuta')
     .order('created_at', { ascending: true });
 
   if (error) throw error;
   return (data ?? []) as QueueItem[];
+}
+
+// URL firmati (temporanei) delle foto nel bucket privato `pending-media`.
+// Il moderatore può leggere il bucket privato (policy `pending_all_moderator`).
+export async function fetchSubmissionMedia(submissionId: string): Promise<string[]> {
+  const { data, error } = await supabase
+    .from('media')
+    .select('path')
+    .eq('submission_id', submissionId)
+    .eq('bucket', 'pending-media');
+  if (error) throw error;
+
+  const urls: string[] = [];
+  for (const row of data ?? []) {
+    const { data: signed } = await supabase.storage
+      .from('pending-media')
+      .createSignedUrl((row as { path: string }).path, 600);
+    if (signed?.signedUrl) urls.push(signed.signedUrl);
+  }
+  return urls;
 }
 
 export async function rejectSubmission(id: string, reason: string): Promise<void> {

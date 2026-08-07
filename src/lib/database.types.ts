@@ -234,6 +234,22 @@ export interface Database {
         };
         Relationships: [];
       };
+      submissions_queue: {
+        Row: {
+          id: string;
+          title: string;
+          description: string;
+          type: string;
+          category_id: string;
+          proposal: string | null;
+          location_label: string | null;
+          internal_status: string;
+          created_at: string;
+          lng: number;
+          lat: number;
+        };
+        Relationships: [];
+      };
     };
     Functions: {
       is_moderator: {
