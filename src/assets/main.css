@@ -1,3 +1,5 @@
+@import 'tailwindcss';
+
 :root {
   --color-brand: #1f6f5c;
   --color-brand-dark: #17513f;

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, computed } from 'vue';
 import { fetchActiveCategories } from '@/lib/categories';
 import { submitReport } from '@/lib/submissions';
 import { PLACE_TYPE_LABELS } from '@/lib/labels';
@@ -26,19 +26,47 @@ const submitting = ref(false);
 const submitError = ref<string | null>(null);
 const reference = ref<string | null>(null);
 
+const locating = ref(false);
+const locationStatus = ref<string | null>(null);
+const hasLocation = computed(
+  () => form.value.lng !== '' && form.value.lat !== '',
+);
+
 const types: PlaceType[] = ['criticita', 'risorsa', 'proposta'];
+
+// La posizione è obbligatoria: senza consenso non si può inviare.
+function detectLocation() {
+  if (!('geolocation' in navigator)) {
+    locationStatus.value =
+      'Geolocalizzazione non disponibile su questo dispositivo.';
+    return;
+  }
+  locating.value = true;
+  locationStatus.value = 'Richiesta di accesso alla posizione in corso…';
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      form.value.lng = pos.coords.longitude.toFixed(6);
+      form.value.lat = pos.coords.latitude.toFixed(6);
+      locationStatus.value = 'Posizione acquisita.';
+      locating.value = false;
+    },
+    () => {
+      form.value.lng = '';
+      form.value.lat = '';
+      locationStatus.value =
+        'Accesso alla posizione negato. Consentilo per inviare la segnalazione.';
+      locating.value = false;
+    },
+    { enableHighAccuracy: true, timeout: 10000 },
+  );
+}
 
 function validate(): string | null {
   if (!form.value.title.trim()) return 'Inserisci un titolo.';
   if (!form.value.description.trim()) return 'Inserisci una descrizione.';
   if (!form.value.categoryId) return 'Seleziona una categoria.';
-  const lng = Number(form.value.lng);
-  const lat = Number(form.value.lat);
-  if (!Number.isFinite(lng) || !Number.isFinite(lat)) {
-    return 'Indica una posizione valida (longitudine e latitudine).';
-  }
-  if (lng < -180 || lng > 180 || lat < -90 || lat > 90) {
-    return 'Le coordinate indicate non sono valide.';
+  if (!hasLocation.value) {
+    return 'Consenti l\'accesso alla posizione per inviare la segnalazione.';
   }
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(form.value.email)) {
     return 'Inserisci un indirizzo e-mail valido.';
@@ -80,6 +108,7 @@ async function onSubmit() {
 }
 
 onMounted(async () => {
+  detectLocation();
   try {
     categories.value = await fetchActiveCategories();
   } catch (e) {
@@ -91,11 +120,13 @@ onMounted(async () => {
 </script>
 
 <template>
-  <section class="container submit-view">
-    <h1>Segnala un luogo</h1>
+  <section class="mx-auto w-[min(100%-2rem,640px)] py-6">
+    <h1 class="mb-2 text-2xl font-bold text-gray-900">
+      Segnala un luogo
+    </h1>
 
     <p
-      class="submit-view__notice"
+      class="mb-6 rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600"
       role="note"
     >
       Questo non è un canale di emergenza. Per situazioni urgenti contatta i
@@ -106,54 +137,65 @@ onMounted(async () => {
 
     <div
       v-if="reference"
-      class="submit-view__success"
+      class="rounded-lg border border-emerald-200 bg-emerald-50 p-4"
       role="status"
     >
-      <h2>Segnalazione ricevuta</h2>
-      <p>Grazie. Riferimento: <strong>{{ reference }}</strong>.</p>
+      <h2 class="text-lg font-semibold text-emerald-800">
+        Segnalazione ricevuta
+      </h2>
+      <p class="mt-1 text-emerald-900">
+        Grazie. Riferimento: <strong>{{ reference }}</strong>.
+      </p>
     </div>
 
     <form
       v-else
-      class="submit-view__form"
+      class="grid gap-5"
       novalidate
       @submit.prevent="onSubmit"
     >
       <p
         v-if="loadError"
+        class="text-red-700"
         role="alert"
       >
         {{ loadError }}
       </p>
       <p
         v-if="submitError"
-        class="submit-view__error"
+        class="font-medium text-red-700"
         role="alert"
       >
         {{ submitError }}
       </p>
 
-      <fieldset>
-        <legend>Tipo</legend>
-        <label
-          v-for="t in types"
-          :key="t"
-          class="submit-view__radio"
-        >
-          <input
-            v-model="form.type"
-            type="radio"
-            :value="t"
+      <fieldset class="grid gap-2 rounded-lg border border-gray-200 p-4">
+        <legend class="px-1 font-semibold text-gray-900">
+          Tipo
+        </legend>
+        <div class="flex flex-wrap gap-x-6 gap-y-1">
+          <label
+            v-for="t in types"
+            :key="t"
+            class="inline-flex items-center gap-2 text-gray-900"
           >
-          {{ PLACE_TYPE_LABELS[t] }}
-        </label>
+            <input
+              v-model="form.type"
+              type="radio"
+              :value="t"
+              class="h-4 w-4 accent-emerald-700"
+            >
+            {{ PLACE_TYPE_LABELS[t] }}
+          </label>
+        </div>
       </fieldset>
 
-      <label>
+      <label class="grid gap-1.5 font-semibold text-gray-900">
         Categoria
         <select
           v-model="form.categoryId"
           required
+          class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 font-normal focus:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
         >
           <option
             value=""
@@ -163,90 +205,114 @@ onMounted(async () => {
             v-for="c in categories"
             :key="c.id"
             :value="c.id"
-          >{{ c.label }}</option>
+          >
+            {{ c.label }}
+          </option>
         </select>
       </label>
 
-      <label>
+      <label class="grid gap-1.5 font-semibold text-gray-900">
         Titolo
         <input
           v-model="form.title"
           type="text"
           maxlength="120"
           required
+          class="w-full rounded-lg border border-gray-300 px-3 py-2 font-normal focus:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
         >
       </label>
 
-      <label>
+      <label class="grid gap-1.5 font-semibold text-gray-900">
         Descrizione
         <textarea
           v-model="form.description"
           rows="5"
           maxlength="2000"
           required
+          class="w-full resize-y rounded-lg border border-gray-300 px-3 py-2 font-normal focus:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
         />
       </label>
 
-      <label>
+      <label class="grid gap-1.5 font-semibold text-gray-900">
         Proposta (facoltativa)
         <textarea
           v-model="form.proposal"
           rows="3"
           maxlength="1000"
+          class="w-full resize-y rounded-lg border border-gray-300 px-3 py-2 font-normal focus:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
         />
       </label>
 
-      <div class="submit-view__coords">
-        <label>
-          Longitudine
-          <input
-            v-model="form.lng"
-            type="number"
-            step="any"
-            required
-          >
-        </label>
-        <label>
-          Latitudine
-          <input
-            v-model="form.lat"
-            type="number"
-            step="any"
-            required
-          >
-        </label>
-      </div>
+      <fieldset class="grid gap-2 rounded-lg border border-gray-200 p-4">
+        <legend class="px-1 font-semibold text-gray-900">
+          Posizione
+        </legend>
+        <p class="text-sm text-gray-600">
+          Per inviare la segnalazione è necessario consentire l'accesso alla tua
+          posizione. Le coordinate servono solo a collocare il luogo sulla mappa.
+        </p>
+        <button
+          type="button"
+          :disabled="locating"
+          class="inline-flex w-fit items-center gap-2 rounded-lg border border-emerald-700 px-4 py-2 font-medium disabled:opacity-60"
+          :class="
+            hasLocation
+              ? 'bg-emerald-50 text-emerald-800'
+              : 'bg-emerald-700 text-white'
+          "
+          @click="detectLocation"
+        >
+          {{
+            locating
+              ? 'Richiesta in corso…'
+              : hasLocation
+                ? 'Posizione acquisita ✓'
+                : 'Consenti la posizione'
+          }}
+        </button>
+        <p
+          v-if="locationStatus"
+          class="text-sm"
+          :class="hasLocation ? 'text-emerald-700' : 'text-gray-600'"
+          role="status"
+        >
+          {{ locationStatus }}
+        </p>
+      </fieldset>
 
-      <label>
+      <label class="grid gap-1.5 font-semibold text-gray-900">
         Località (facoltativa)
         <input
           v-model="form.locationLabel"
           type="text"
           maxlength="120"
+          class="w-full rounded-lg border border-gray-300 px-3 py-2 font-normal focus:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
         >
       </label>
 
-      <label>
+      <label class="grid gap-1.5 font-semibold text-gray-900">
         E-mail (non sarà pubblicata)
         <input
           v-model="form.email"
           type="email"
           required
+          class="w-full rounded-lg border border-gray-300 px-3 py-2 font-normal focus:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
         >
       </label>
 
-      <label class="submit-view__consent">
+      <label class="flex items-start gap-2 text-gray-900">
         <input
           v-model="form.consent"
           type="checkbox"
           required
+          class="mt-1 h-4 w-4 accent-emerald-700"
         >
         Accetto le regole editoriali e l'informativa sulla privacy.
       </label>
 
       <!-- Campo honeypot anti-bot: nascosto agli utenti, non compilabile via tastiera. -->
       <label
-        class="submit-view__honeypot"
+        class="absolute left-[-9999px] h-px w-px overflow-hidden"
         aria-hidden="true"
       >
         Non compilare questo campo
@@ -259,85 +325,12 @@ onMounted(async () => {
       </label>
 
       <button
-        class="btn"
         type="submit"
-        :disabled="submitting"
+        :disabled="submitting || !hasLocation"
+        class="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-700 px-4 py-2.5 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
       >
         {{ submitting ? 'Invio in corso…' : 'Invia segnalazione' }}
       </button>
     </form>
   </section>
 </template>
-
-<style scoped>
-.submit-view {
-  padding-block: 1rem 2rem;
-}
-
-.submit-view__notice {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  padding: 0.75rem 1rem;
-}
-
-.submit-view__form {
-  display: grid;
-  gap: 1rem;
-  max-width: 640px;
-}
-
-.submit-view__form label {
-  display: grid;
-  gap: 0.3rem;
-  font-weight: 600;
-}
-
-.submit-view__form input,
-.submit-view__form select,
-.submit-view__form textarea {
-  padding: 0.5rem;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  font-weight: 400;
-}
-
-.submit-view__coords {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-}
-
-.submit-view__radio {
-  display: inline-flex;
-  gap: 0.3rem;
-  margin-right: 1rem;
-  font-weight: 400;
-}
-
-.submit-view__consent {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.5rem;
-  font-weight: 400;
-}
-
-.submit-view__error {
-  color: var(--color-danger);
-}
-
-.submit-view__honeypot {
-  position: absolute;
-  left: -9999px;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-}
-
-.submit-view__success {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  padding: 1rem;
-}
-</style>

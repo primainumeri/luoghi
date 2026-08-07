@@ -2,6 +2,7 @@ import { fileURLToPath, URL } from 'node:url';
 import { defineConfig } from 'vitest/config';
 import vue from '@vitejs/plugin-vue';
 import { VitePWA } from 'vite-plugin-pwa';
+import tailwindcss from '@tailwindcss/vite';
 
 // Base path configurabile per GitHub Pages ("/NOME-REPO/") o dominio/root ("/").
 const base = process.env.VITE_BASE ?? '/';
@@ -10,6 +11,7 @@ export default defineConfig({
   base,
   plugins: [
     vue(),
+    tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
       // Cache della SOLA interfaccia essenziale. Nessun dato privato o API in cache.
