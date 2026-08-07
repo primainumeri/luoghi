@@ -1,0 +1,83 @@
+:root {
+  --color-brand: #1f6f5c;
+  --color-brand-dark: #17513f;
+  --color-text: #1a1a1a;
+  --color-muted: #5f6b66;
+  --color-bg: #ffffff;
+  --color-surface: #f4f6f5;
+  --color-border: #d6ddda;
+  --color-danger: #a3341f;
+  --focus-ring: 3px solid #1f6f5c;
+  --radius: 8px;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color: var(--color-text);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  margin: 0;
+  min-height: 100vh;
+}
+
+body {
+  background: var(--color-bg);
+  line-height: 1.5;
+}
+
+a {
+  color: var(--color-brand-dark);
+}
+
+/* Focus sempre visibile per accessibilità da tastiera. */
+:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1rem;
+  border: 1px solid var(--color-brand);
+  border-radius: var(--radius);
+  background: var(--color-brand);
+  color: #fff;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.btn--ghost {
+  background: transparent;
+  color: var(--color-brand-dark);
+}
+
+.container {
+  width: min(100% - 2rem, 900px);
+  margin-inline: auto;
+}
+
+.skip-link {
+  position: absolute;
+  left: -999px;
+  top: 0;
+  background: #fff;
+  padding: 0.5rem 1rem;
+  z-index: 1000;
+}
+
+.skip-link:focus {
+  left: 0;
+}
