@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@import './flyer.css';
 
 :root {
   --color-brand: #1f6f5c;

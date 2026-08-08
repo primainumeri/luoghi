@@ -1,0 +1,352 @@
+/* Design system "volantino" condiviso dalle pagine di progetto
+   (Progetto, Chi siamo, Obiettivi, Diventa revisore). Namespaced sotto .flyer. */
+
+.flyer {
+  --paper: #f4ecdb;
+  --paper-card: #fbf7ec;
+  --navy: #1f3d6b;
+  --navy-dark: #16305a;
+  --orange: #d9663b;
+  --olive: #5f6b2f;
+  --ink: #26303f;
+  background: var(--paper);
+  margin-block: -0.1rem 2rem;
+  padding-block: 1rem 2.5rem;
+}
+
+.flyer .flyer__inner {
+  color: var(--ink);
+}
+
+/* --- Hero --------------------------------------------------------------- */
+.flyer .hero {
+  position: relative;
+  padding-block: 1.5rem 0.5rem;
+  overflow: hidden;
+}
+
+.flyer .sun {
+  position: absolute;
+  top: -18px;
+  right: -18px;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 40%, #e8834f, var(--orange));
+  opacity: 0.9;
+}
+
+.flyer .hero__icon {
+  font-size: 3rem;
+  line-height: 1;
+}
+
+.flyer .eyebrow,
+.flyer .card__eyebrow {
+  margin: 0 0 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--olive);
+}
+
+.flyer .hero__title {
+  margin: 0;
+  font-size: clamp(2.6rem, 9vw, 4rem);
+  line-height: 0.95;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  color: var(--navy);
+}
+
+.flyer .hero__claim {
+  margin: 0.75rem 0 0;
+  font-size: clamp(1.2rem, 4.5vw, 1.7rem);
+  font-weight: 800;
+  color: var(--navy);
+  max-width: 26ch;
+}
+
+.flyer .hl {
+  display: inline-block;
+  background: var(--orange);
+  color: #fff;
+  padding: 0.05em 0.4em;
+  border-radius: 6px;
+  transform: rotate(-1.5deg);
+}
+
+.flyer .hero__lead {
+  margin-top: 1rem;
+  font-size: 1.1rem;
+  max-width: 58ch;
+  color: var(--ink);
+}
+
+.flyer .actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.flyer .pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1.5rem;
+  border-radius: 999px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-decoration: none;
+  font-size: 0.95rem;
+}
+
+.flyer .pill--navy {
+  background: var(--navy);
+  color: #fff;
+}
+
+.flyer .pill--orange {
+  background: var(--orange);
+  color: #fff;
+}
+
+.flyer .tagline {
+  margin-top: 1.25rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--navy);
+}
+
+.flyer .tagline span {
+  color: var(--orange);
+  margin-inline: 0.15em;
+}
+
+/* --- Cards -------------------------------------------------------------- */
+.flyer .card,
+.flyer .approfondisci {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  border-radius: 18px;
+  background: var(--paper-card);
+  border: 1px solid #e5dcc5;
+}
+
+.flyer .card--quiet {
+  background: transparent;
+  border-style: dashed;
+}
+
+.flyer .card__title {
+  margin: 0 0 0.75rem;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--navy);
+}
+
+.flyer .card__sub {
+  margin-top: 1.25rem;
+  font-weight: 700;
+  color: var(--navy);
+}
+
+.flyer .card p {
+  max-width: 62ch;
+}
+
+/* Header di sezione con icona */
+.flyer .card__head {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.flyer .card__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.8rem;
+  height: 2.8rem;
+  flex: none;
+  border-radius: 50%;
+  font-size: 1.5rem;
+  background: var(--paper);
+  border: 1px solid #e5dcc5;
+}
+
+/* Flusso / stati */
+.flyer .flow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1.25rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.flyer .flow__step {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: #fff;
+  border: 1px solid #e5dcc5;
+  border-radius: 999px;
+  padding: 0.35rem 0.8rem 0.35rem 0.35rem;
+  font-weight: 700;
+  color: var(--navy);
+  font-size: 0.9rem;
+}
+
+.flyer .flow__num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.4rem;
+  height: 1.4rem;
+  border-radius: 50%;
+  background: var(--navy);
+  color: #fff;
+  font-size: 0.8rem;
+}
+
+/* Tipologie */
+.flyer .types {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 0.6rem;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.flyer .type {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: #fff;
+  border: 1px solid #e5dcc5;
+  border-radius: 12px;
+  padding: 0.7rem 0.9rem;
+  font-weight: 700;
+  color: var(--navy);
+}
+
+.flyer .type__icon {
+  font-size: 1.4rem;
+}
+
+/* Categorie */
+.flyer .cats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.5rem;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.flyer .cat {
+  position: relative;
+  background: #fff;
+  border: 1px solid #e5dcc5;
+  border-left: 5px solid var(--olive);
+  border-radius: 10px;
+  padding: 0.7rem 0.9rem;
+  font-weight: 600;
+}
+
+/* Griglia di feature con badge (obiettivi, revisore) */
+.flyer .features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.flyer .feature {
+  background: #fff;
+  border: 1px solid #e5dcc5;
+  border-radius: 14px;
+  padding: 1.1rem;
+}
+
+.flyer .feature__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.8rem;
+  height: 2.8rem;
+  border-radius: 50%;
+  font-size: 1.5rem;
+  background: var(--paper);
+  border: 1px solid #e5dcc5;
+  margin-bottom: 0.6rem;
+}
+
+.flyer .feature h3 {
+  margin: 0 0 0.35rem;
+  color: var(--navy);
+  font-size: 1.1rem;
+}
+
+.flyer .feature p {
+  margin: 0;
+}
+
+/* Elenco con icone */
+.flyer .icon-list {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0 0;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.flyer .icon-list li {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+}
+
+.flyer .icon-list .ic {
+  flex: none;
+  font-size: 1.2rem;
+  line-height: 1.5;
+}
+
+/* Approfondisci */
+.flyer .links {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-top: 0.75rem;
+}
+
+.flyer .link-card {
+  display: block;
+  background: #fff;
+  border: 1px solid #e5dcc5;
+  border-radius: 14px;
+  padding: 1rem;
+  text-decoration: none;
+  color: var(--ink);
+}
+
+.flyer .link-card strong {
+  display: block;
+  margin-bottom: 0.25rem;
+  color: var(--navy);
+  font-size: 1.05rem;
+}
+
+.flyer .link-card:hover {
+  border-color: var(--orange);
+}
