@@ -607,23 +607,31 @@ onBeforeUnmount(() => {
 }
 
 :deep(.map-marker) {
-  display: flex;
+  /* L'area cliccabile coincide col pin visibile: nessun box invisibile che
+     copra i marker vicini. */
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
   border: 0;
   background: transparent;
   cursor: pointer;
   padding: 0;
+  line-height: 0;
+}
+
+/* Marker sotto il cursore/il focus in primo piano: consente di raggiungere
+   anche quelli parzialmente sovrapposti. */
+:deep(.map-marker:hover),
+:deep(.map-marker:focus-visible) {
+  z-index: 10;
 }
 
 :deep(.map-marker__pin) {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   border-radius: 50% 50% 50% 0;
   transform: rotate(-45deg);
   border: 2px solid #fff;
