@@ -47,6 +47,15 @@ const HYBRID_STYLE: maplibregl.StyleSpecification = {
       maxzoom: 19,
       attribution: 'Imagery © Esri, Maxar, Earthstar Geographics',
     },
+    'esri-transportation': {
+      type: 'raster',
+      tiles: [
+        'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}',
+      ],
+      tileSize: 256,
+      maxzoom: 19,
+      attribution: '© Esri',
+    },
     'esri-labels': {
       type: 'raster',
       tiles: [
@@ -59,6 +68,7 @@ const HYBRID_STYLE: maplibregl.StyleSpecification = {
   },
   layers: [
     { id: 'esri-imagery', type: 'raster', source: 'esri-imagery' },
+    { id: 'esri-transportation', type: 'raster', source: 'esri-transportation' },
     { id: 'esri-labels', type: 'raster', source: 'esri-labels' },
   ],
 };
@@ -66,7 +76,7 @@ const HYBRID_STYLE: maplibregl.StyleSpecification = {
 // Se è configurato uno style esterno lo usiamo e nascondiamo il selettore.
 const externalStyle = import.meta.env.VITE_MAP_STYLE_URL as string | undefined;
 const canToggleBase = !externalStyle;
-const baseMode = ref<'osm' | 'hybrid'>('osm');
+const baseMode = ref<'osm' | 'hybrid'>('hybrid');
 
 const router = useRouter();
 const mapContainer = ref<HTMLDivElement | null>(null);
@@ -138,7 +148,7 @@ onMounted(() => {
   if (!mapContainer.value) return;
   const m = new maplibregl.Map({
     container: mapContainer.value,
-    style: externalStyle || OSM_STYLE,
+    style: externalStyle || (baseMode.value === 'hybrid' ? HYBRID_STYLE : OSM_STYLE),
     center: DEFAULT_CENTER,
     zoom: DEFAULT_ZOOM,
   });
