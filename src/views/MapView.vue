@@ -258,6 +258,12 @@ onBeforeUnmount(() => {
 <style scoped>
 .map-view {
   position: relative;
+  /* Palette "volantino" per i controlli sopra la mappa. */
+  --map-navy: #1f3d6b;
+  --map-orange: #d9663b;
+  --map-paper: #fbf7ec;
+  --map-border: #e5dcc5;
+  --map-ink: #26303f;
 }
 
 .map-view__share {
@@ -277,9 +283,9 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  background: var(--color-brand);
+  background: var(--map-orange);
   color: #fff;
-  font-weight: 700;
+  font-weight: 800;
   padding: 0.8rem 1.2rem;
   border-radius: 999px;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28);
@@ -302,11 +308,14 @@ onBeforeUnmount(() => {
   left: 50%;
   transform: translateX(-50%);
   z-index: 5;
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
+  background: var(--map-paper);
+  border: 1px solid var(--map-border);
+  border-radius: 999px;
+  color: var(--map-ink);
+  font-weight: 600;
   padding: 0.5rem 0.9rem;
   margin: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
 }
 
 .map-view__status--error {
@@ -317,29 +326,30 @@ onBeforeUnmount(() => {
 .map-view__base-toggle {
   position: absolute;
   top: 0.75rem;
-  left: 0.75rem;
+  right: 0.75rem;
   z-index: 5;
   display: inline-flex;
   overflow: hidden;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--map-border);
+  border-radius: 999px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
 }
 
 .map-view__base-toggle button {
   border: 0;
-  background: var(--color-bg);
-  padding: 0.4rem 0.8rem;
-  font-weight: 600;
+  background: var(--map-paper);
+  color: var(--map-navy);
+  padding: 0.4rem 0.9rem;
+  font-weight: 700;
   cursor: pointer;
 }
 
 .map-view__base-toggle button + button {
-  border-left: 1px solid var(--color-border);
+  border-left: 1px solid var(--map-border);
 }
 
 .map-view__base-toggle button.is-active {
-  background: var(--color-brand);
+  background: var(--map-navy);
   color: #fff;
 }
 
