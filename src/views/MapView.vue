@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, onBeforeUnmount, ref, shallowRef } from 'vue';
-import { useRouter } from 'vue-router';
+import { RouterLink, useRouter } from 'vue-router';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { fetchPublishedPlaces } from '@/lib/places';
@@ -17,6 +17,8 @@ import ShareButtons from '@/components/ShareButtons.vue';
 
 // Su desktop la segnalazione non e' disponibile: invitiamo a usare il telefono.
 const isDesktop = !isMobileDevice();
+// Su mobile la home e' una call-to-action: la mappa si apre solo su richiesta.
+const showMap = ref(isDesktop);
 
 // Centro predefinito: Policastro Bussentino (Comune di Santa Marina).
 const DEFAULT_CENTER: [number, number] = [15.4783, 40.0783];
@@ -143,15 +145,16 @@ async function loadPlaces() {
   } catch (e) {
     error.value =
       'Non è stato possibile caricare i luoghi. Riprova più tardi.';
-     
+
     console.error(e);
   } finally {
     loading.value = false;
   }
 }
 
-onMounted(() => {
-  if (!mapContainer.value) return;
+// Inizializza la mappa (solo quando il contenitore è montato/visibile).
+function initMap() {
+  if (map.value || !mapContainer.value) return;
   const m = new maplibregl.Map({
     container: mapContainer.value,
     style: externalStyle || (baseMode.value === 'hybrid' ? HYBRID_STYLE : OSM_STYLE),
@@ -173,6 +176,16 @@ onMounted(() => {
     loadPlaces();
     geolocate.trigger();
   });
+}
+
+function openMap() {
+  showMap.value = true;
+  // Attende il render del contenitore prima di creare la mappa.
+  requestAnimationFrame(() => initMap());
+}
+
+onMounted(() => {
+  if (showMap.value) initMap();
 });
 
 onBeforeUnmount(() => {
@@ -187,66 +200,108 @@ onBeforeUnmount(() => {
       Mappa dei luoghi pubblicati
     </h1>
 
-    <ShareButtons
-      class="map-view__share"
-      compact
-      :url="SITE_URL"
-    />
-
+    <!-- Home mobile: call-to-action prima della mappa. -->
     <div
-      v-if="isDesktop"
-      class="map-view__cta"
-      role="note"
+      v-if="!showMap"
+      class="map-cta"
     >
-      <span aria-hidden="true">📱</span>
-      Apri questa pagina col telefono per contribuire con le tue segnalazioni.
+      <div class="map-cta__inner">
+        <span
+          class="map-cta__icon"
+          aria-hidden="true"
+        >📸</span>
+        <h2 class="map-cta__title">
+          Aiutaci a migliorare
+          <span>questo paese</span>
+        </h2>
+        <p class="map-cta__lead">
+          Vedi qualcosa che non va, o un luogo da valorizzare?
+          Bastano una foto e poche parole. Niente moduli, niente politica.
+        </p>
+        <RouterLink
+          to="/segnala"
+          class="map-cta__btn"
+        >
+          <span aria-hidden="true">📸</span>
+          Segnala
+        </RouterLink>
+        <button
+          type="button"
+          class="map-cta__link"
+          @click="openMap"
+        >
+          Esplora la mappa
+        </button>
+        <ShareButtons
+          class="map-cta__share"
+          :url="SITE_URL"
+        />
+      </div>
     </div>
 
-    <p
-      v-if="error"
-      class="map-view__status map-view__status--error"
-      role="alert"
-    >
-      {{ error }}
-    </p>
-    <p
-      v-else-if="loading"
-      class="map-view__status"
-      role="status"
-    >
-      Caricamento della mappa…
-    </p>
-    <p
-      v-else-if="places.length === 0"
-      class="map-view__status"
-      role="status"
-    >
-      Nessun luogo pubblicato al momento.
-    </p>
+    <template v-if="showMap">
+      <ShareButtons
+        class="map-view__share"
+        compact
+        :url="SITE_URL"
+      />
+
+      <div
+        v-if="isDesktop"
+        class="map-view__cta"
+        role="note"
+      >
+        <span aria-hidden="true">📱</span>
+        Apri questa pagina col telefono per contribuire con le tue segnalazioni.
+      </div>
+
+      <p
+        v-if="error"
+        class="map-view__status map-view__status--error"
+        role="alert"
+      >
+        {{ error }}
+      </p>
+      <p
+        v-else-if="loading"
+        class="map-view__status"
+        role="status"
+      >
+        Caricamento della mappa…
+      </p>
+      <p
+        v-else-if="places.length === 0"
+        class="map-view__status"
+        role="status"
+      >
+        Nessun luogo pubblicato al momento.
+      </p>
+
+      <div
+        v-if="canToggleBase"
+        class="map-view__base-toggle"
+        role="group"
+        aria-label="Tipo di mappa"
+      >
+        <button
+          type="button"
+          :class="{ 'is-active': baseMode === 'osm' }"
+          @click="setBase('osm')"
+        >
+          Mappa
+        </button>
+        <button
+          type="button"
+          :class="{ 'is-active': baseMode === 'hybrid' }"
+          @click="setBase('hybrid')"
+        >
+          Ibrida
+        </button>
+      </div>
+    </template>
 
     <div
-      v-if="canToggleBase"
-      class="map-view__base-toggle"
-      role="group"
-      aria-label="Tipo di mappa"
-    >
-      <button
-        type="button"
-        :class="{ 'is-active': baseMode === 'osm' }"
-        @click="setBase('osm')"
-      >
-        Mappa
-      </button>
-      <button
-        type="button"
-        :class="{ 'is-active': baseMode === 'hybrid' }"
-        @click="setBase('hybrid')"
-      >
-        Ibrida
-      </button>
-    </div>
-
-    <div
+      v-show="showMap"
       ref="mapContainer"
       class="map-view__canvas"
       role="application"
@@ -264,6 +319,84 @@ onBeforeUnmount(() => {
   --map-paper: #fbf7ec;
   --map-border: #e5dcc5;
   --map-ink: #26303f;
+}
+
+.map-cta {
+  min-height: calc(100vh - 140px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: var(--map-paper);
+}
+
+.map-cta__inner {
+  max-width: 30rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  text-align: center;
+}
+
+.map-cta__icon {
+  font-size: 3.5rem;
+  line-height: 1;
+}
+
+.map-cta__title {
+  margin: 0;
+  font-size: clamp(2rem, 8vw, 2.8rem);
+  font-weight: 900;
+  line-height: 1.02;
+  text-transform: uppercase;
+  color: var(--map-navy);
+}
+
+.map-cta__title span {
+  color: var(--map-orange);
+}
+
+.map-cta__lead {
+  margin: 0;
+  max-width: 30ch;
+  color: var(--map-ink);
+  font-size: 1.05rem;
+}
+
+.map-cta__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+  padding: 1.05rem 2.4rem;
+  border-radius: 999px;
+  background: var(--map-orange);
+  color: #fff;
+  font-size: 1.35rem;
+  font-weight: 800;
+  text-decoration: none;
+  box-shadow: 0 8px 22px rgba(217, 102, 59, 0.4);
+}
+
+.map-cta__btn span {
+  font-size: 1.5rem;
+}
+
+.map-cta__link {
+  border: 0;
+  background: none;
+  color: var(--map-navy);
+  font-weight: 700;
+  font-size: 1rem;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0.4rem;
+}
+
+.map-cta__share {
+  margin-top: 0.75rem;
+  justify-content: center;
 }
 
 .map-view__share {
