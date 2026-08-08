@@ -91,3 +91,98 @@ export async function setPlaceStatus(
   });
   if (error) throw error;
 }
+
+function contentTypeFor(path: string): string {
+  if (path.endsWith('.png')) return 'image/png';
+  if (path.endsWith('.webp')) return 'image/webp';
+  return 'image/jpeg';
+}
+
+// Promuove una singola foto da `pending-media` (privato) a `public-media`
+// (pubblico), aggiorna la riga e la collega alla scheda. Il moderatore ha i
+// permessi RLS su entrambi i bucket, quindi la copia avviene lato client.
+async function promoteOne(
+  mediaId: string,
+  path: string,
+  placeId: string,
+): Promise<void> {
+  const dl = await supabase.storage.from('pending-media').download(path);
+  if (dl.error || !dl.data) throw dl.error ?? new Error('Download foto fallito');
+
+  const up = await supabase.storage
+    .from('public-media')
+    .upload(path, dl.data, {
+      contentType: dl.data.type || contentTypeFor(path),
+      upsert: true,
+    });
+  if (up.error) throw up.error;
+
+  const { error: updErr } = await supabase
+    .from('media')
+    .update({ bucket: 'public-media', status: 'approved', place_id: placeId })
+    .eq('id', mediaId);
+  if (updErr) throw updErr;
+
+  // Best-effort: rimuove la copia privata ormai superflua.
+  await supabase.storage.from('pending-media').remove([path]);
+}
+
+// Promuove tutte le foto in attesa di una segnalazione appena pubblicata e le
+// collega alla scheda pubblica creata.
+export async function promoteSubmissionMedia(
+  submissionId: string,
+  placeId: string,
+): Promise<void> {
+  const { data, error } = await supabase
+    .from('media')
+    .select('id, path')
+    .eq('submission_id', submissionId)
+    .eq('bucket', 'pending-media');
+  if (error) throw error;
+
+  for (const row of (data ?? []) as { id: string; path: string }[]) {
+    await promoteOne(row.id, row.path, placeId);
+  }
+}
+
+// Ripara le schede già pubblicate le cui foto sono rimaste nel bucket privato
+// (pubblicazioni precedenti al collegamento automatico). Restituisce il numero
+// di foto promosse. Idempotente: le foto già promosse non compaiono più qui.
+export async function repairPublishedMedia(): Promise<number> {
+  const { data: pending, error } = await supabase
+    .from('media')
+    .select('id, path, submission_id')
+    .eq('bucket', 'pending-media');
+  if (error) throw error;
+
+  const rows = (pending ?? []) as {
+    id: string;
+    path: string;
+    submission_id: string;
+  }[];
+  if (rows.length === 0) return 0;
+
+  const subIds = [...new Set(rows.map((r) => r.submission_id))];
+  const { data: places, error: pErr } = await supabase
+    .from('places')
+    .select('id, source_submission_id')
+    .in('source_submission_id', subIds);
+  if (pErr) throw pErr;
+
+  const placeBySub = new Map<string, string>();
+  for (const pl of (places ?? []) as {
+    id: string;
+    source_submission_id: string | null;
+  }[]) {
+    if (pl.source_submission_id) placeBySub.set(pl.source_submission_id, pl.id);
+  }
+
+  let promoted = 0;
+  for (const row of rows) {
+    const placeId = placeBySub.get(row.submission_id);
+    if (!placeId) continue; // segnalazione non ancora pubblicata: resta in attesa
+    await promoteOne(row.id, row.path, placeId);
+    promoted += 1;
+  }
+  return promoted;
+}

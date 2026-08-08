@@ -6,6 +6,8 @@ import {
   fetchQueue,
   fetchSubmissionMedia,
   publishSubmission,
+  promoteSubmissionMedia,
+  repairPublishedMedia,
   rejectSubmission,
   type QueueItem,
 } from '@/lib/moderation';
@@ -21,6 +23,8 @@ const loading = ref(false);
 const error = ref<string | null>(null);
 const items = ref<QueueItem[]>([]);
 const busyId = ref<string | null>(null);
+const repairing = ref(false);
+const repairMsg = ref<string | null>(null);
 const categoriesById = ref<Record<string, Category>>({});
 
 function typeLabel(t: string): string {
@@ -79,13 +83,14 @@ async function onReject(item: QueueItem) {
 async function onPublish(item: QueueItem) {
   busyId.value = item.id;
   try {
-    await publishSubmission({
+    const placeId = await publishSubmission({
       submissionId: item.id,
       title: item.title,
       description: item.description,
       proposal: item.proposal ?? undefined,
       publicStatus: 'segnalato',
     });
+    await promoteSubmissionMedia(item.id, placeId);
     await load();
   } catch (e) {
     error.value = 'Pubblicazione non riuscita.';
@@ -93,6 +98,25 @@ async function onPublish(item: QueueItem) {
     console.error(e);
   } finally {
     busyId.value = null;
+  }
+}
+
+async function onRepair() {
+  repairing.value = true;
+  error.value = null;
+  repairMsg.value = null;
+  try {
+    const n = await repairPublishedMedia();
+    repairMsg.value =
+      n === 0
+        ? 'Nessuna foto da riparare: le schede pubblicate sono gia a posto.'
+        : `Foto promosse: ${n}. Ora compaiono nelle schede sulla mappa.`;
+  } catch (e) {
+    error.value = 'Riparazione foto non riuscita.';
+     
+    console.error(e);
+  } finally {
+    repairing.value = false;
   }
 }
 
@@ -113,15 +137,35 @@ onMounted(async () => {
       <h1 class="text-2xl font-bold text-slate-900">
         Moderazione
       </h1>
-      <button
+      <div
         v-if="session"
-        class="rounded-lg border border-slate-300 px-4 py-2 font-semibold text-slate-700"
-        type="button"
-        @click="onSignOut"
+        class="flex items-center gap-2"
       >
-        Esci
-      </button>
+        <button
+          class="rounded-lg border border-slate-300 px-4 py-2 font-semibold text-slate-700 disabled:opacity-50"
+          type="button"
+          :disabled="repairing"
+          @click="onRepair"
+        >
+          {{ repairing ? 'Riparo foto…' : 'Ripara foto pubblicate' }}
+        </button>
+        <button
+          class="rounded-lg border border-slate-300 px-4 py-2 font-semibold text-slate-700"
+          type="button"
+          @click="onSignOut"
+        >
+          Esci
+        </button>
+      </div>
     </div>
+
+    <p
+      v-if="repairMsg"
+      class="mt-4 font-semibold text-emerald-700"
+      role="status"
+    >
+      {{ repairMsg }}
+    </p>
 
     <p
       v-if="ready && !session"
