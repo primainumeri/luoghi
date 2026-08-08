@@ -103,6 +103,7 @@ function capturePhoto() {
       if (photoUrl.value) URL.revokeObjectURL(photoUrl.value);
       photo.value = new File([blob], `foto-${Date.now()}.jpg`, { type: 'image/jpeg' });
       photoUrl.value = URL.createObjectURL(photo.value);
+      step.value = 'type';
       stopCamera();
     },
     'image/jpeg',
@@ -114,10 +115,14 @@ function retakePhoto() {
   if (photoUrl.value) URL.revokeObjectURL(photoUrl.value);
   photo.value = null;
   photoUrl.value = '';
+  step.value = 'type';
   startCamera();
 }
 
-// --- Dati della segnalazione -------------------------------------------------
+// --- Dati della segnalazione (flusso a pagine) -------------------------------
+type Step = 'type' | 'category' | 'details';
+const step = ref<Step>('type');
+
 const placeType = ref<PlaceType | ''>('');
 const typeOptions: { value: PlaceType; hint: string }[] = [
   { value: 'criticita', hint: 'Problemi da verificare' },
@@ -128,6 +133,31 @@ const typeOptions: { value: PlaceType; hint: string }[] = [
 const description = ref('');
 const categoryId = ref('');
 const reporterName = ref('');
+
+// Solo le categorie compatibili con la tipologia scelta (fallback: tutte).
+const visibleCategories = computed(() => {
+  const t = placeType.value;
+  if (!t) return categories.value;
+  const filtered = categories.value.filter((c) => c.types.includes(t));
+  return filtered.length ? filtered : categories.value;
+});
+
+function chooseType(t: PlaceType) {
+  placeType.value = t;
+  categoryId.value = '';
+  step.value = 'category';
+}
+
+function chooseCategory(id: string) {
+  categoryId.value = id;
+  step.value = 'details';
+}
+
+function goBack() {
+  if (step.value === 'details') step.value = 'category';
+  else if (step.value === 'category') step.value = 'type';
+  else retakePhoto();
+}
 
 // --- Captcha (Cloudflare Turnstile), attivo solo se configurata la site key --
 const turnstileSiteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
@@ -173,9 +203,9 @@ const reference = ref<string | null>(null);
 function validate(): string | null {
   if (!photo.value) return 'Scatta prima una foto.';
   if (!hasGeo.value) return 'Consenti l’accesso alla posizione.';
-  if (!description.value.trim()) return 'Aggiungi una descrizione.';
   if (!placeType.value) return 'Scegli di cosa si tratta.';
   if (!categoryId.value) return 'Scegli una categoria.';
+  if (!description.value.trim()) return 'Aggiungi una nota.';
   if (!reporterName.value.trim()) return 'Inserisci il tuo nome.';
   if (captchaEnabled && !turnstileToken.value) return 'Completa la verifica anti-spam.';
   return null;
@@ -209,7 +239,7 @@ async function onSubmit() {
       e instanceof Error && e.message
         ? e.message
         : 'Invio non riuscito. Riprova più tardi.';
-     
+
     console.error(e);
   } finally {
     submitting.value = false;
@@ -225,7 +255,7 @@ onMounted(async () => {
     categories.value = await fetchActiveCategories();
   } catch (e) {
     loadError.value = 'Impossibile caricare le categorie.';
-     
+
     console.error(e);
   }
 });
@@ -257,10 +287,10 @@ onBeforeUnmount(() => {
     </router-link>
   </section>
 
-  <!-- Mobile: flusso guidato camera-first -->
+  <!-- Mobile: flusso guidato a pagine -->
   <section
     v-else
-    class="mx-auto max-w-xl px-4 py-6"
+    class="mx-auto flex min-h-[85vh] max-w-xl flex-col px-4 py-6"
   >
     <!-- Esito -->
     <div
@@ -281,7 +311,7 @@ onBeforeUnmount(() => {
       </router-link>
     </div>
 
-    <!-- Passo 1: scatta la foto -->
+    <!-- Passo 0: scatta la foto -->
     <div
       v-else-if="!photo"
       class="grid gap-4"
@@ -347,132 +377,158 @@ onBeforeUnmount(() => {
       </button>
     </div>
 
-    <!-- Passo 2: dettagli e invio -->
-    <form
+    <!-- Passi successivi: una scelta per pagina -->
+    <div
       v-else
-      class="grid gap-5"
-      novalidate
-      @submit.prevent="onSubmit"
+      class="flex flex-1 flex-col"
     >
-      <h1 class="text-xl font-bold text-slate-900">
-        Completa la segnalazione
-      </h1>
-
-      <div class="overflow-hidden rounded-xl border border-slate-300">
+      <!-- Intestazione compatta con miniatura e indietro -->
+      <div class="mb-5 flex items-center gap-3">
+        <button
+          type="button"
+          class="text-2xl leading-none text-slate-500"
+          aria-label="Indietro"
+          @click="goBack"
+        >
+          ←
+        </button>
         <img
           :src="photoUrl"
           alt="Foto scattata"
-          class="aspect-[3/4] w-full object-cover"
+          class="h-14 w-14 flex-none rounded-lg border border-slate-300 object-cover"
         >
+        <button
+          type="button"
+          class="ml-auto text-sm font-semibold text-emerald-700"
+          @click="retakePhoto"
+        >
+          ↻ Rifai la foto
+        </button>
       </div>
-      <button
-        type="button"
-        class="justify-self-start font-semibold text-emerald-700"
-        @click="retakePhoto"
-      >
-        ↻ Rifai la foto
-      </button>
 
-      <p
-        v-if="loadError"
-        class="font-semibold text-red-700"
-        role="alert"
+      <!-- Passo 1: che cos'è? -->
+      <div
+        v-if="step === 'type'"
+        class="flex flex-1 flex-col"
       >
-        {{ loadError }}
-      </p>
-      <p
-        v-if="submitError"
-        class="font-semibold text-red-700"
-        role="alert"
-      >
-        {{ submitError }}
-      </p>
-
-      <label class="grid gap-1.5 font-semibold text-slate-800">
-        Descrizione
-        <textarea
-          v-model="description"
-          rows="4"
-          maxlength="2000"
-          required
-          class="w-full resize-y rounded-lg border border-slate-300 bg-white px-3 py-2 font-normal text-slate-900"
-        />
-      </label>
-
-      <fieldset class="grid gap-2">
-        <legend class="mb-1 font-semibold text-slate-800">
-          Di cosa si tratta?
-        </legend>
-        <div class="grid grid-cols-2 gap-2">
+        <h1 class="mb-4 text-2xl font-bold text-slate-900">
+          Che cos’è?
+        </h1>
+        <div class="grid grid-cols-2 gap-3">
           <button
             v-for="t in typeOptions"
             :key="t.value"
             type="button"
-            class="flex flex-col items-center gap-1 rounded-xl border-2 px-2 py-3 text-center transition"
-            :class="
-              placeType === t.value
-                ? 'border-emerald-600 bg-emerald-50'
-                : 'border-slate-200 bg-white'
-            "
-            @click="placeType = t.value"
+            class="flex aspect-square flex-col items-center justify-center gap-2 rounded-2xl border-2 border-slate-200 bg-white p-3 text-center active:scale-95"
+            @click="chooseType(t.value)"
           >
             <span
-              class="text-2xl"
+              class="text-4xl"
               aria-hidden="true"
             >{{ PLACE_TYPE_ICONS[t.value] }}</span>
-            <span class="text-sm font-semibold text-slate-900">{{ PLACE_TYPE_LABELS[t.value] }}</span>
-            <span class="text-[11px] leading-tight text-slate-500">{{ t.hint }}</span>
+            <span class="text-base font-semibold text-slate-900">{{ PLACE_TYPE_LABELS[t.value] }}</span>
+            <span class="text-xs leading-tight text-slate-500">{{ t.hint }}</span>
           </button>
         </div>
-      </fieldset>
+      </div>
 
-      <label class="grid gap-1.5 font-semibold text-slate-800">
-        Categoria
-        <select
-          v-model="categoryId"
-          required
-          class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 font-normal text-slate-900"
-        >
-          <option
-            value=""
-            disabled
-          >Seleziona…</option>
-          <option
-            v-for="c in categories"
-            :key="c.id"
-            :value="c.id"
-          >{{ c.label }}</option>
-        </select>
-      </label>
-
-      <label class="grid gap-1.5 font-semibold text-slate-800">
-        Il tuo nome
-        <input
-          v-model="reporterName"
-          type="text"
-          maxlength="120"
-          required
-          class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 font-normal text-slate-900"
-        >
-      </label>
-
+      <!-- Passo 2: dimmi di più (categoria) -->
       <div
-        v-if="captchaEnabled"
-        ref="turnstileEl"
-        class="min-h-[65px]"
-      />
-
-      <p class="text-xs text-slate-500">
-        Caricando accetti l’informativa sulla privacy. Il nome non viene pubblicato.
-      </p>
-
-      <button
-        class="rounded-lg bg-emerald-700 px-5 py-3 text-lg font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
-        type="submit"
-        :disabled="submitting"
+        v-else-if="step === 'category'"
+        class="flex flex-1 flex-col"
       >
-        {{ submitting ? 'Caricamento…' : 'Carica' }}
-      </button>
-    </form>
+        <h1 class="text-2xl font-bold text-slate-900">
+          Dimmi di più
+        </h1>
+        <p class="mb-4 mt-1 text-slate-500">
+          {{ PLACE_TYPE_LABELS[placeType as PlaceType] }} · scegli una categoria
+        </p>
+        <p
+          v-if="loadError"
+          class="font-semibold text-red-700"
+          role="alert"
+        >
+          {{ loadError }}
+        </p>
+        <div class="grid gap-2">
+          <button
+            v-for="c in visibleCategories"
+            :key="c.id"
+            type="button"
+            class="flex items-center gap-3 rounded-xl border-2 border-slate-200 bg-white px-4 py-3 text-left active:scale-[0.98]"
+            @click="chooseCategory(c.id)"
+          >
+            <span
+              class="h-4 w-4 flex-none rounded-full"
+              :style="{ backgroundColor: c.color }"
+              aria-hidden="true"
+            />
+            <span class="font-semibold text-slate-900">{{ c.label }}</span>
+            <span class="ml-auto text-slate-400">›</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Passo 3: nota e pubblica -->
+      <form
+        v-else
+        class="flex flex-1 flex-col gap-4"
+        novalidate
+        @submit.prevent="onSubmit"
+      >
+        <h1 class="text-2xl font-bold text-slate-900">
+          Aggiungi una nota
+        </h1>
+
+        <label class="grid gap-1.5 font-semibold text-slate-800">
+          Nota
+          <textarea
+            v-model="description"
+            rows="4"
+            maxlength="2000"
+            required
+            placeholder="Descrivi cosa hai visto…"
+            class="w-full resize-y rounded-lg border border-slate-300 bg-white px-3 py-2 font-normal text-slate-900"
+          />
+        </label>
+
+        <label class="grid gap-1.5 font-semibold text-slate-800">
+          Il tuo nome
+          <input
+            v-model="reporterName"
+            type="text"
+            maxlength="120"
+            required
+            class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 font-normal text-slate-900"
+          >
+        </label>
+
+        <div
+          v-if="captchaEnabled"
+          ref="turnstileEl"
+          class="min-h-[65px]"
+        />
+
+        <p
+          v-if="submitError"
+          class="font-semibold text-red-700"
+          role="alert"
+        >
+          {{ submitError }}
+        </p>
+
+        <p class="text-xs text-slate-500">
+          Pubblicando accetti l’informativa sulla privacy. Il nome non viene pubblicato.
+        </p>
+
+        <button
+          class="mt-auto rounded-lg bg-emerald-700 px-5 py-3 text-lg font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+          type="submit"
+          :disabled="submitting"
+        >
+          {{ submitting ? 'Pubblicazione…' : 'Pubblica' }}
+        </button>
+      </form>
+    </div>
   </section>
 </template>

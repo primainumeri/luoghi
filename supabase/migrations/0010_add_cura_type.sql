@@ -98,3 +98,8 @@ grant execute on function public.submit_report(
   text, text, text, uuid, text, double precision, double precision,
   text, date, text, text, boolean, text[]
 ) to anon, authenticated;
+
+-- Aggiunge "cura" alle categorie attive esistenti (seed gia applicato in prod).
+update public.categories
+  set types = array_append(types, 'cura')
+  where active and not ('cura' = any(types));
