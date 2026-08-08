@@ -43,7 +43,6 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
-          VITE_BASE: ${{ vars.VITE_BASE }}
           VITE_MAP_STYLE_URL: ${{ vars.VITE_MAP_STYLE_URL }}
 
       - uses: actions/upload-pages-artifact@v3
