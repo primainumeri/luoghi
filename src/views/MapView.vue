@@ -19,6 +19,8 @@ import ShareButtons from '@/components/ShareButtons.vue';
 const isDesktop = !isMobileDevice();
 // Su mobile la home e' una call-to-action: la mappa si apre solo su richiesta.
 const showMap = ref(isDesktop);
+// Tipi di segnalazione mostrati nella call-to-action.
+const ctaTypes = ['criticita', 'proposta', 'risorsa', 'cura'] as const;
 
 // Centro predefinito: Policastro Bussentino (Comune di Santa Marina).
 const DEFAULT_CENTER: [number, number] = [15.4783, 40.0783];
@@ -218,6 +220,19 @@ onBeforeUnmount(() => {
           Vedi qualcosa che non va, o un luogo da valorizzare?
           Bastano una foto e poche parole. Niente moduli, niente politica.
         </p>
+        <ul class="map-cta__types">
+          <li
+            v-for="t in ctaTypes"
+            :key="t"
+            class="map-cta__type"
+          >
+            <span
+              class="map-cta__type-ico"
+              aria-hidden="true"
+            >{{ PLACE_TYPE_ICONS[t] }}</span>
+            {{ PLACE_TYPE_LABELS[t] }}
+          </li>
+        </ul>
         <RouterLink
           to="/segnala"
           class="map-cta__btn"
@@ -377,6 +392,36 @@ onBeforeUnmount(() => {
   max-width: 30ch;
   color: var(--map-ink);
   font-size: 1.05rem;
+}
+
+.map-cta__types {
+  list-style: none;
+  margin: 0.25rem 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 22rem;
+}
+
+.map-cta__type {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.55rem 0.75rem;
+  background: #fff;
+  border: 1px solid var(--map-border);
+  border-radius: 12px;
+  color: var(--map-navy);
+  font-weight: 700;
+  font-size: 0.95rem;
+  text-align: left;
+}
+
+.map-cta__type-ico {
+  font-size: 1.2rem;
+  line-height: 1;
 }
 
 .map-cta__btn {
