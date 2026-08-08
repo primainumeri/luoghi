@@ -119,17 +119,22 @@ function addMarkers(list: Place[]) {
     const type = isPlaceType(place.type) ? place.type : 'criticita';
     const el = document.createElement('button');
     el.className = 'map-marker';
-    el.style.background = PLACE_TYPE_COLORS[type];
+    el.type = 'button';
+    const pin = document.createElement('span');
+    pin.className = 'map-marker__pin';
+    pin.style.background = PLACE_TYPE_COLORS[type];
     const icon = document.createElement('span');
     icon.className = 'map-marker__icon';
     icon.textContent = PLACE_TYPE_ICONS[type];
     icon.setAttribute('aria-hidden', 'true');
-    el.appendChild(icon);
+    pin.appendChild(icon);
+    el.appendChild(pin);
     el.setAttribute(
       'aria-label',
       `${PLACE_TYPE_LABELS[type]}: ${place.title}. Apri la scheda.`,
     );
-    el.addEventListener('click', () => {
+    el.addEventListener('click', (ev) => {
+      ev.stopPropagation();
       selected.value = place;
     });
 
@@ -479,6 +484,7 @@ onBeforeUnmount(() => {
   bottom: 1.25rem;
   transform: translateX(-50%);
   z-index: 6;
+  pointer-events: none;
   max-width: min(92%, 560px);
   display: flex;
   align-items: center;
@@ -545,6 +551,7 @@ onBeforeUnmount(() => {
   left: 50%;
   transform: translateX(-50%);
   z-index: 5;
+  pointer-events: none;
   background: var(--map-paper);
   border: 1px solid var(--map-border);
   border-radius: 999px;
@@ -603,14 +610,25 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+}
+
+:deep(.map-marker__pin) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
   border-radius: 50% 50% 50% 0;
   transform: rotate(-45deg);
   border: 2px solid #fff;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
-  cursor: pointer;
-  padding: 0;
+  pointer-events: none;
 }
 
 :deep(.map-marker__icon) {
