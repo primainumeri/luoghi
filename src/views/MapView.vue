@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, onBeforeUnmount, ref, shallowRef } from 'vue';
-import { RouterLink, useRouter } from 'vue-router';
+import { RouterLink } from 'vue-router';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { fetchPublishedPlaces } from '@/lib/places';
@@ -14,6 +14,7 @@ import type { Place } from '@/lib/types';
 import { isMobileDevice } from '@/lib/device';
 import { SITE_URL } from '@/lib/site';
 import ShareButtons from '@/components/ShareButtons.vue';
+import PlaceModal from '@/components/PlaceModal.vue';
 
 // Su desktop la segnalazione non e' disponibile: invitiamo a usare il telefono.
 const isDesktop = !isMobileDevice();
@@ -88,7 +89,6 @@ const externalStyle = import.meta.env.VITE_MAP_STYLE_URL as string | undefined;
 const canToggleBase = !externalStyle;
 const baseMode = ref<'osm' | 'hybrid'>('hybrid');
 
-const router = useRouter();
 const mapContainer = ref<HTMLDivElement | null>(null);
 const map = shallowRef<maplibregl.Map | null>(null);
 const markers: maplibregl.Marker[] = [];
@@ -96,6 +96,8 @@ const markers: maplibregl.Marker[] = [];
 const loading = ref(true);
 const error = ref<string | null>(null);
 const places = ref<Place[]>([]);
+// Scheda aperta nel modale al click sul marker.
+const selected = ref<Place | null>(null);
 
 function setBase(mode: 'osm' | 'hybrid') {
   if (!canToggleBase || baseMode.value === mode) return;
@@ -128,7 +130,7 @@ function addMarkers(list: Place[]) {
       `${PLACE_TYPE_LABELS[type]}: ${place.title}. Apri la scheda.`,
     );
     el.addEventListener('click', () => {
-      router.push({ name: 'place', params: { id: place.id } });
+      selected.value = place;
     });
 
     const marker = new maplibregl.Marker({ element: el })
@@ -337,6 +339,11 @@ onBeforeUnmount(() => {
         Segnala
       </button>
     </div>
+
+    <PlaceModal
+      :place="selected"
+      @close="selected = null"
+    />
   </section>
 </template>
 

@@ -30,3 +30,23 @@ export async function fetchPlaceById(id: string): Promise<Place | null> {
   }
   return (data as Place | null) ?? null;
 }
+
+// Foto pubbliche di una scheda: solo media approvati nel bucket public-media.
+// La RLS consente la lettura anonima di questi record; il bucket è pubblico.
+export async function fetchPlaceMedia(placeId: string): Promise<string[]> {
+  const { data, error } = await supabase
+    .from('media')
+    .select('path, created_at')
+    .eq('place_id', placeId)
+    .eq('bucket', 'public-media')
+    .eq('status', 'approved')
+    .order('created_at', { ascending: true });
+
+  if (error) {
+    throw error;
+  }
+  return (data ?? []).map(
+    (m) =>
+      supabase.storage.from('public-media').getPublicUrl(m.path).data.publicUrl,
+  );
+}
