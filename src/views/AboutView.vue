@@ -14,7 +14,7 @@ import { CONTACT_EMAIL } from '@/lib/site';
     <h2>Perché lo facciamo</h2>
     <p>
       Il Cilento non è soltanto una cartolina: è un territorio vivente, fatto di
-      strade, coste, borghi e persone che se ne prendono cura ogni giorno.
+      strade, coste, centri storici e persone che se ne prendono cura ogni giorno.
       Vogliamo dare a chi vive e ama questi luoghi uno strumento semplice per
       osservarli, documentarli e migliorarli insieme.
     </p>
