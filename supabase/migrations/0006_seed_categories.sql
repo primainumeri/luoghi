@@ -8,5 +8,5 @@ insert into public.categories (slug, label, color, types, active, sort) values
   ('verde-alberature',   'Verde pubblico e alberature',           '#2f7a3f', array['criticita','risorsa','proposta','cura'], true, 30),
   ('rifiuti-decoro',     'Rifiuti, pulizia e decoro',             '#8f5a2a', array['criticita','proposta','cura'],           true, 40),
   ('costa-ambiente',     'Costa, spiagge e ambiente marino',      '#1f6f8f', array['criticita','risorsa','proposta','cura'], true, 50),
-  ('patrimonio-bellezza','Patrimonio storico e bellezza urbana',  '#6a2f7a', array['risorsa','proposta','cura'],             true, 60)
+  ('patrimonio-bellezza','Patrimonio storico e bellezza urbana',  '#6a2f7a', array['criticita','risorsa','proposta','cura'], true, 60)
 on conflict (slug) do nothing;

@@ -440,9 +440,15 @@ onBeforeUnmount(() => {
         <h1 class="text-2xl font-bold text-slate-900">
           Dimmi di più
         </h1>
-        <p class="mb-4 mt-1 text-slate-500">
-          {{ PLACE_TYPE_LABELS[placeType as PlaceType] }} · scegli una categoria
-        </p>
+        <button
+          type="button"
+          class="mb-4 mt-1 flex items-center gap-2 self-start rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700"
+          @click="step = 'type'"
+        >
+          <span aria-hidden="true">{{ PLACE_TYPE_ICONS[placeType as PlaceType] }}</span>
+          {{ PLACE_TYPE_LABELS[placeType as PlaceType] }}
+          <span class="text-emerald-700">· cambia</span>
+        </button>
         <p
           v-if="loadError"
           class="font-semibold text-red-700"
