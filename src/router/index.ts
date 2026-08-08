@@ -42,6 +42,11 @@ const router = createRouter({
       component: () => import('@/views/ReviewerView.vue'),
     },
     {
+      path: '/contribuisci',
+      name: 'contribute',
+      component: () => import('@/views/ContribuisciView.vue'),
+    },
+    {
       path: '/moderazione',
       name: 'moderation',
       component: () => import('@/views/ModerationView.vue'),

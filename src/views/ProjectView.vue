@@ -2,6 +2,8 @@
 import { RouterLink } from 'vue-router';
 import { PLACE_TYPE_LABELS, PLACE_TYPE_ICONS } from '@/lib/labels';
 import { isMobileDevice } from '@/lib/device';
+import { SITE_URL } from '@/lib/site';
+import ShareButtons from '@/components/ShareButtons.vue';
 
 const canReport = isMobileDevice();
 const tipologie = ['criticita', 'proposta', 'risorsa', 'cura'] as const;
@@ -146,6 +148,13 @@ const flusso = ['Segnalazione', 'Verifica', 'Proposta', 'Confronto', 'Azione', '
         </p>
         <div class="links">
           <RouterLink
+            to="/contribuisci"
+            class="link-card"
+          >
+            <strong>Contribuisci</strong>
+            Tutti i modi per dare una mano al progetto.
+          </RouterLink>
+          <RouterLink
             to="/chi-siamo"
             class="link-card"
           >
@@ -167,6 +176,24 @@ const flusso = ['Segnalazione', 'Verifica', 'Proposta', 'Confronto', 'Azione', '
             Aiutaci a verificare e curare le segnalazioni.
           </RouterLink>
         </div>
+      </section>
+
+      <!-- Condividi -->
+      <section class="card">
+        <div class="card__head">
+          <span
+            class="card__badge"
+            aria-hidden="true"
+          >📣</span>
+          <h2 class="card__title">
+            Fai girare la mappa
+          </h2>
+        </div>
+        <p>
+          Più persone la conoscono, più diventa utile. Condividila con chi ti sta
+          vicino.
+        </p>
+        <ShareButtons :url="SITE_URL" />
       </section>
     </article>
   </div>

@@ -12,6 +12,8 @@ import {
 } from '@/lib/labels';
 import type { Place } from '@/lib/types';
 import { isMobileDevice } from '@/lib/device';
+import { SITE_URL } from '@/lib/site';
+import ShareButtons from '@/components/ShareButtons.vue';
 
 // Su desktop la segnalazione non e' disponibile: invitiamo a usare il telefono.
 const isDesktop = !isMobileDevice();
@@ -185,6 +187,12 @@ onBeforeUnmount(() => {
       Mappa dei luoghi pubblicati
     </h1>
 
+    <ShareButtons
+      class="map-view__share"
+      compact
+      :url="SITE_URL"
+    />
+
     <div
       v-if="isDesktop"
       class="map-view__cta"
@@ -250,6 +258,13 @@ onBeforeUnmount(() => {
 <style scoped>
 .map-view {
   position: relative;
+}
+
+.map-view__share {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 6;
 }
 
 .map-view__cta {

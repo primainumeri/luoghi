@@ -34,6 +34,9 @@ const canReport = isMobileDevice();
         <RouterLink to="/progetto">
           Progetto
         </RouterLink>
+        <RouterLink to="/contribuisci">
+          Contribuisci
+        </RouterLink>
         <RouterLink
           v-if="canReport"
           to="/segnala"
@@ -69,6 +72,9 @@ const canReport = isMobileDevice();
         </RouterLink>
         <RouterLink to="/diventa-revisore">
           Diventa revisore
+        </RouterLink>
+        <RouterLink to="/contribuisci">
+          Contribuisci
         </RouterLink>
       </nav>
       <p>
