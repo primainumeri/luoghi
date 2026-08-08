@@ -11,6 +11,10 @@ import {
   isPlaceType,
 } from '@/lib/labels';
 import type { Place } from '@/lib/types';
+import { isMobileDevice } from '@/lib/device';
+
+// Su desktop la segnalazione non e' disponibile: invitiamo a usare il telefono.
+const isDesktop = !isMobileDevice();
 
 // Centro predefinito: Policastro Bussentino (Comune di Santa Marina).
 const DEFAULT_CENTER: [number, number] = [15.4783, 40.0783];
@@ -181,6 +185,15 @@ onBeforeUnmount(() => {
       Mappa dei luoghi pubblicati
     </h1>
 
+    <div
+      v-if="isDesktop"
+      class="map-view__cta"
+      role="note"
+    >
+      <span aria-hidden="true">📱</span>
+      Apri questa pagina col telefono per contribuire con le tue segnalazioni.
+    </div>
+
     <p
       v-if="error"
       class="map-view__status map-view__status--error"
@@ -237,6 +250,29 @@ onBeforeUnmount(() => {
 <style scoped>
 .map-view {
   position: relative;
+}
+
+.map-view__cta {
+  position: absolute;
+  left: 50%;
+  bottom: 1.25rem;
+  transform: translateX(-50%);
+  z-index: 6;
+  max-width: min(92%, 560px);
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: var(--color-brand);
+  color: #fff;
+  font-weight: 700;
+  padding: 0.8rem 1.2rem;
+  border-radius: 999px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28);
+  text-align: left;
+}
+
+.map-view__cta span {
+  font-size: 1.4rem;
 }
 
 .map-view__canvas {
