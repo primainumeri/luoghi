@@ -241,6 +241,7 @@ onBeforeUnmount(() => {
 
     <template v-if="showMap">
       <ShareButtons
+        v-if="isDesktop"
         class="map-view__share"
         compact
         :url="SITE_URL"
@@ -278,7 +279,7 @@ onBeforeUnmount(() => {
       </p>
 
       <div
-        v-if="canToggleBase"
+        v-if="canToggleBase && isDesktop"
         class="map-view__base-toggle"
         role="group"
         aria-label="Tipo di mappa"
@@ -307,6 +308,20 @@ onBeforeUnmount(() => {
       role="application"
       aria-label="Mappa"
     />
+
+    <div
+      v-if="showMap && !isDesktop"
+      class="map-view__report-bar"
+    >
+      <button
+        type="button"
+        class="map-view__report-btn"
+        @click="showMap = false"
+      >
+        <span aria-hidden="true">📸</span>
+        Segnala
+      </button>
+    </div>
   </section>
 </template>
 
@@ -427,6 +442,43 @@ onBeforeUnmount(() => {
 
 .map-view__cta span {
   font-size: 1.4rem;
+}
+
+.map-view__report-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 7;
+  display: flex;
+  justify-content: center;
+  padding: 0.9rem 1rem calc(0.9rem + env(safe-area-inset-bottom));
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.2), transparent);
+  pointer-events: none;
+}
+
+.map-view__report-btn {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 420px;
+  padding: 1rem 1.5rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--map-orange);
+  color: #fff;
+  font-size: 1.2rem;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.3);
+}
+
+.map-view__report-btn span {
+  font-size: 1.35rem;
 }
 
 .map-view__canvas {

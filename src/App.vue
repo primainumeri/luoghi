@@ -1,11 +1,19 @@
 <script setup lang="ts">
-import { RouterLink, RouterView } from 'vue-router';
+import { computed } from 'vue';
+import { RouterLink, RouterView, useRoute } from 'vue-router';
 import { isMobileDevice } from '@/lib/device';
 import { immersive } from '@/lib/uiState';
 import InstallPrompt from '@/components/InstallPrompt.vue';
 
 // La segnalazione è disponibile solo su mobile (fotocamera + posizione).
 const canReport = isMobileDevice();
+const isMobile = canReport;
+
+// Su mobile la barra superiore è nascosta: un pulsante flottante riporta alla home.
+const route = useRoute();
+const showHomeButton = computed(
+  () => route.name !== 'map' && route.name !== 'submit',
+);
 </script>
 
 <template>
@@ -14,7 +22,7 @@ const canReport = isMobileDevice();
     href="#main"
   >Salta al contenuto</a>
   <header
-    v-if="!immersive"
+    v-if="!immersive && !isMobile"
     class="site-header"
   >
     <div class="container site-header__inner">
@@ -84,6 +92,15 @@ const canReport = isMobileDevice();
     </div>
   </footer>
 
+  <RouterLink
+    v-if="isMobile && !immersive && showHomeButton"
+    to="/"
+    class="home-fab"
+  >
+    <span aria-hidden="true">‹</span>
+    Prima i luoghi
+  </RouterLink>
+
   <InstallPrompt />
 </template>
 
@@ -127,5 +144,28 @@ const canReport = isMobileDevice();
   flex-wrap: wrap;
   gap: 1rem;
   margin-bottom: 0.75rem;
+}
+
+.home-fab {
+  position: fixed;
+  top: calc(0.6rem + env(safe-area-inset-top));
+  left: 0.6rem;
+  z-index: 20;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: 999px;
+  background: #1f3d6b;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.95rem;
+  text-decoration: none;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
+}
+
+.home-fab span {
+  font-size: 1.15rem;
+  line-height: 1;
 }
 </style>
