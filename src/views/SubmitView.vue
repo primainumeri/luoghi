@@ -4,7 +4,8 @@ import { fetchActiveCategories } from '@/lib/categories';
 import { submitReport } from '@/lib/submissions';
 import { uploadPendingMedia } from '@/lib/media';
 import { isMobileDevice } from '@/lib/device';
-import type { Category } from '@/lib/types';
+import { PLACE_TYPE_ICONS, PLACE_TYPE_LABELS } from '@/lib/labels';
+import type { Category, PlaceType } from '@/lib/types';
 
 interface TurnstileApi {
   render: (el: HTMLElement, opts: Record<string, unknown>) => string;
@@ -117,6 +118,13 @@ function retakePhoto() {
 }
 
 // --- Dati della segnalazione -------------------------------------------------
+const placeType = ref<PlaceType | ''>('');
+const typeOptions: { value: PlaceType; hint: string }[] = [
+  { value: 'criticita', hint: 'Problemi da verificare' },
+  { value: 'proposta', hint: 'Idee per migliorare' },
+  { value: 'risorsa', hint: 'Beni e paesaggi da proteggere' },
+  { value: 'cura', hint: 'Interventi già realizzati' },
+];
 const description = ref('');
 const categoryId = ref('');
 const reporterName = ref('');
@@ -166,6 +174,7 @@ function validate(): string | null {
   if (!photo.value) return 'Scatta prima una foto.';
   if (!hasGeo.value) return 'Consenti l’accesso alla posizione.';
   if (!description.value.trim()) return 'Aggiungi una descrizione.';
+  if (!placeType.value) return 'Scegli di cosa si tratta.';
   if (!categoryId.value) return 'Scegli una categoria.';
   if (!reporterName.value.trim()) return 'Inserisci il tuo nome.';
   if (captchaEnabled && !turnstileToken.value) return 'Completa la verifica anti-spam.';
@@ -186,7 +195,7 @@ async function onSubmit() {
     reference.value = await submitReport({
       title: text.slice(0, 120),
       description: text,
-      type: 'criticita',
+      type: placeType.value as PlaceType,
       categoryId: categoryId.value,
       lng: (geo.value as { lng: number; lat: number }).lng,
       lat: (geo.value as { lng: number; lat: number }).lat,
@@ -389,6 +398,33 @@ onBeforeUnmount(() => {
           class="w-full resize-y rounded-lg border border-slate-300 bg-white px-3 py-2 font-normal text-slate-900"
         />
       </label>
+
+      <fieldset class="grid gap-2">
+        <legend class="mb-1 font-semibold text-slate-800">
+          Di cosa si tratta?
+        </legend>
+        <div class="grid grid-cols-2 gap-2">
+          <button
+            v-for="t in typeOptions"
+            :key="t.value"
+            type="button"
+            class="flex flex-col items-center gap-1 rounded-xl border-2 px-2 py-3 text-center transition"
+            :class="
+              placeType === t.value
+                ? 'border-emerald-600 bg-emerald-50'
+                : 'border-slate-200 bg-white'
+            "
+            @click="placeType = t.value"
+          >
+            <span
+              class="text-2xl"
+              aria-hidden="true"
+            >{{ PLACE_TYPE_ICONS[t.value] }}</span>
+            <span class="text-sm font-semibold text-slate-900">{{ PLACE_TYPE_LABELS[t.value] }}</span>
+            <span class="text-[11px] leading-tight text-slate-500">{{ t.hint }}</span>
+          </button>
+        </div>
+      </fieldset>
 
       <label class="grid gap-1.5 font-semibold text-slate-800">
         Categoria

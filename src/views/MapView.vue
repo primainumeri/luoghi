@@ -4,7 +4,12 @@ import { useRouter } from 'vue-router';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { fetchPublishedPlaces } from '@/lib/places';
-import { PLACE_TYPE_COLORS, PLACE_TYPE_LABELS, isPlaceType } from '@/lib/labels';
+import {
+  PLACE_TYPE_COLORS,
+  PLACE_TYPE_ICONS,
+  PLACE_TYPE_LABELS,
+  isPlaceType,
+} from '@/lib/labels';
 import type { Place } from '@/lib/types';
 
 // Centro predefinito: Policastro Bussentino (Comune di Santa Marina).
@@ -93,6 +98,11 @@ function addMarkers(list: Place[]) {
     const el = document.createElement('button');
     el.className = 'map-marker';
     el.style.background = PLACE_TYPE_COLORS[type];
+    const icon = document.createElement('span');
+    icon.className = 'map-marker__icon';
+    icon.textContent = PLACE_TYPE_ICONS[type];
+    icon.setAttribute('aria-hidden', 'true');
+    el.appendChild(icon);
     el.setAttribute(
       'aria-label',
       `${PLACE_TYPE_LABELS[type]}: ${place.title}. Apri la scheda.`,
@@ -282,13 +292,23 @@ onBeforeUnmount(() => {
 }
 
 :deep(.map-marker) {
-  width: 22px;
-  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
   border-radius: 50% 50% 50% 0;
   transform: rotate(-45deg);
   border: 2px solid #fff;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
   cursor: pointer;
   padding: 0;
+}
+
+:deep(.map-marker__icon) {
+  transform: rotate(45deg);
+  font-size: 14px;
+  line-height: 1;
+  pointer-events: none;
 }
 </style>

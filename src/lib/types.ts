@@ -1,6 +1,6 @@
 // Tipi condivisi del dominio applicativo (MVP).
 
-export type PlaceType = 'criticita' | 'risorsa' | 'proposta';
+export type PlaceType = 'criticita' | 'risorsa' | 'proposta' | 'cura';
 
 export type PublicStatus = 'segnalato' | 'inviato_al_comune' | 'risolto';
 
