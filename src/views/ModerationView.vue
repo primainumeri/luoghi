@@ -9,11 +9,15 @@ import {
   promoteSubmissionMedia,
   repairPublishedMedia,
   rejectSubmission,
+  deletePlace,
+  fetchModerationPlaces,
+  setPlaceHidden,
   type QueueItem,
+  type ModerationPlace,
 } from '@/lib/moderation';
 import { fetchActiveCategories } from '@/lib/categories';
 import { PLACE_TYPE_COLORS, PLACE_TYPE_LABELS, isPlaceType } from '@/lib/labels';
-import type { Category } from '@/lib/types';
+import type { Category, PublicStatus } from '@/lib/types';
 
 const router = useRouter();
 const { session, signOut } = useAuth();
@@ -23,6 +27,8 @@ const loading = ref(false);
 const error = ref<string | null>(null);
 const items = ref<QueueItem[]>([]);
 const busyId = ref<string | null>(null);
+const places = ref<ModerationPlace[]>([]);
+const busyPlaceId = ref<string | null>(null);
 const repairing = ref(false);
 const repairMsg = ref<string | null>(null);
 const categoriesById = ref<Record<string, Category>>({});
@@ -39,6 +45,14 @@ function categoryLabel(id: string): string {
 function categoryColor(id: string): string {
   return categoriesById.value[id]?.color ?? '#64748b';
 }
+const STATUS_LABELS: Record<PublicStatus, string> = {
+  segnalato: 'Segnalato',
+  inviato_al_comune: 'Inviato al Comune',
+  risolto: 'Risolto',
+};
+function statusLabel(s: PublicStatus): string {
+  return STATUS_LABELS[s] ?? s;
+}
 function mapsUrl(item: QueueItem): string {
   return `https://www.google.com/maps/search/?api=1&query=${item.lat},${item.lng}`;
 }
@@ -47,7 +61,11 @@ async function load() {
   loading.value = true;
   error.value = null;
   try {
-    const [queue, cats] = await Promise.all([fetchQueue(), fetchActiveCategories()]);
+    const [queue, cats, published] = await Promise.all([
+      fetchQueue(),
+      fetchActiveCategories(),
+      fetchModerationPlaces(),
+    ]);
     categoriesById.value = Object.fromEntries(cats.map((c) => [c.id, c]));
     await Promise.all(
       queue.map(async (it) => {
@@ -55,6 +73,7 @@ async function load() {
       }),
     );
     items.value = queue;
+    places.value = published;
   } catch (e) {
     error.value = 'Impossibile caricare la coda.';
      
@@ -117,6 +136,38 @@ async function onRepair() {
     console.error(e);
   } finally {
     repairing.value = false;
+  }
+}
+
+async function onToggleHidden(place: ModerationPlace) {
+  busyPlaceId.value = place.id;
+  error.value = null;
+  try {
+    await setPlaceHidden(place.id, !place.hidden);
+    await load();
+  } catch (e) {
+    error.value = 'Aggiornamento visibilita non riuscito.';
+    console.error(e);
+  } finally {
+    busyPlaceId.value = null;
+  }
+}
+
+async function onDelete(place: ModerationPlace) {
+  const ok = window.confirm(
+    `Rimuovere definitivamente \u00ab${place.title}\u00bb dalla mappa? L'operazione elimina anche le foto e non e reversibile.`,
+  );
+  if (!ok) return;
+  busyPlaceId.value = place.id;
+  error.value = null;
+  try {
+    await deletePlace(place.id);
+    await load();
+  } catch (e) {
+    error.value = 'Rimozione non riuscita.';
+    console.error(e);
+  } finally {
+    busyPlaceId.value = null;
   }
 }
 
@@ -297,6 +348,76 @@ onMounted(async () => {
           </div>
         </li>
       </ul>
+
+      <!-- Gestione delle schede gia pubblicate: nascondi o elimina -->
+      <div class="mt-12 border-t border-slate-200 pt-8">
+        <h2 class="text-xl font-bold text-slate-900">
+          Segnalazioni pubblicate
+        </h2>
+        <p class="mt-1 text-sm text-slate-500">
+          Nascondi una scheda per toglierla dalla mappa senza cancellarla, oppure eliminala definitivamente.
+        </p>
+
+        <p
+          v-if="!loading && places.length === 0"
+          class="mt-4 text-slate-600"
+          role="status"
+        >
+          Nessuna scheda pubblicata.
+        </p>
+
+        <ul
+          v-else
+          class="mt-4 grid gap-3"
+        >
+          <li
+            v-for="place in places"
+            :key="place.id"
+            class="flex flex-wrap items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm"
+            :class="{ 'opacity-60': place.hidden }"
+          >
+            <span
+              class="rounded-full px-2.5 py-0.5 text-xs font-semibold text-white"
+              :style="{ backgroundColor: typeColor(place.type) }"
+            >
+              {{ typeLabel(place.type) }}
+            </span>
+            <div class="min-w-0 flex-1">
+              <p class="truncate font-semibold text-slate-900">
+                {{ place.title }}
+              </p>
+              <p class="text-xs text-slate-500">
+                {{ statusLabel(place.public_status) }}
+                <template v-if="place.location_label">
+                  · {{ place.location_label }}
+                </template>
+              </p>
+            </div>
+            <span
+              v-if="place.hidden"
+              class="rounded-full bg-slate-200 px-2.5 py-0.5 text-xs font-semibold text-slate-600"
+            >
+              Nascosta
+            </span>
+            <button
+              class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 disabled:opacity-50"
+              type="button"
+              :disabled="busyPlaceId === place.id"
+              @click="onToggleHidden(place)"
+            >
+              {{ place.hidden ? 'Mostra' : 'Nascondi' }}
+            </button>
+            <button
+              class="rounded-lg border border-red-300 px-3 py-1.5 text-sm font-semibold text-red-700 disabled:opacity-50"
+              type="button"
+              :disabled="busyPlaceId === place.id"
+              @click="onDelete(place)"
+            >
+              Elimina
+            </button>
+          </li>
+        </ul>
+      </div>
     </template>
   </section>
 </template>

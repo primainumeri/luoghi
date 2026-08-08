@@ -47,6 +47,7 @@ export interface Database {
           published_at: string;
           updated_at: string;
           source_submission_id: string | null;
+          hidden: boolean;
         };
         Insert: {
           id?: string;
@@ -63,6 +64,7 @@ export interface Database {
           published_at?: string;
           updated_at?: string;
           source_submission_id?: string | null;
+          hidden?: boolean;
         };
         Update: Partial<Database['public']['Tables']['places']['Insert']>;
         Relationships: [];

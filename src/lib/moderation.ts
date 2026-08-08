@@ -186,3 +186,59 @@ export async function repairPublishedMedia(): Promise<number> {
   }
   return promoted;
 }
+
+// Rimozione definitiva di una scheda pubblicata (es. segnalazioni di prova).
+// Cancella le foto dallo storage, le righe media collegate e la scheda.
+// Il moderatore ha i permessi RLS su places/media e su storage.objects.
+export async function deletePlace(placeId: string): Promise<void> {
+  const { data: rows, error: mErr } = await supabase
+    .from('media')
+    .select('path, bucket')
+    .eq('place_id', placeId);
+  if (mErr) throw mErr;
+
+  const byBucket = new Map<string, string[]>();
+  for (const r of (rows ?? []) as { path: string; bucket: string }[]) {
+    const list = byBucket.get(r.bucket) ?? [];
+    list.push(r.path);
+    byBucket.set(r.bucket, list);
+  }
+  for (const [bucket, paths] of byBucket) {
+    if (paths.length > 0) {
+      await supabase.storage.from(bucket).remove(paths);
+    }
+  }
+
+  await supabase.from('media').delete().eq('place_id', placeId);
+
+  const { error: pErr } = await supabase.from('places').delete().eq('id', placeId);
+  if (pErr) throw pErr;
+}
+
+export interface ModerationPlace {
+  id: string;
+  title: string;
+  type: PlaceType;
+  category_id: string;
+  public_status: PublicStatus;
+  location_label: string | null;
+  hidden: boolean;
+  published_at: string;
+}
+
+// Tutte le schede pubblicate (anche quelle nascoste), lette dalla tabella
+// `places` con i privilegi RLS del moderatore. Serve al pannello di gestione.
+export async function fetchModerationPlaces(): Promise<ModerationPlace[]> {
+  const { data, error } = await supabase
+    .from('places')
+    .select('id, title, type, category_id, public_status, location_label, hidden, published_at')
+    .order('published_at', { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as ModerationPlace[];
+}
+
+// Nasconde/mostra una scheda sulla mappa pubblica senza cancellarla.
+export async function setPlaceHidden(placeId: string, hidden: boolean): Promise<void> {
+  const { error } = await supabase.from('places').update({ hidden }).eq('id', placeId);
+  if (error) throw error;
+}
