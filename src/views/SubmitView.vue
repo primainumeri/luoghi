@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watchEffect } from 'vue';
 import { fetchActiveCategories } from '@/lib/categories';
 import { submitReport } from '@/lib/submissions';
 import { uploadPendingMedia } from '@/lib/media';
 import { isMobileDevice } from '@/lib/device';
+import { immersive } from '@/lib/uiState';
 import { PLACE_TYPE_ICONS, PLACE_TYPE_LABELS } from '@/lib/labels';
 import type { Category, PlaceType } from '@/lib/types';
 
@@ -200,6 +201,12 @@ const submitting = ref(false);
 const submitError = ref<string | null>(null);
 const reference = ref<string | null>(null);
 
+// Nasconde l'intestazione del sito mentre e' attiva la fotocamera,
+// per la massima visibilita' dell'inquadratura.
+watchEffect(() => {
+  immersive.value = isMobile && !reference.value && !photo.value;
+});
+
 function validate(): string | null {
   if (!photo.value) return 'Scatta prima una foto.';
   if (!hasGeo.value) return 'Consenti l’accesso alla posizione.';
@@ -261,6 +268,7 @@ onMounted(async () => {
 });
 
 onBeforeUnmount(() => {
+  immersive.value = false;
   stopCamera();
   if (photoUrl.value) URL.revokeObjectURL(photoUrl.value);
 });

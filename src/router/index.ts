@@ -22,6 +22,26 @@ const router = createRouter({
       component: () => import('@/views/SubmitView.vue'),
     },
     {
+      path: '/progetto',
+      name: 'project',
+      component: () => import('@/views/ProjectView.vue'),
+    },
+    {
+      path: '/chi-siamo',
+      name: 'about',
+      component: () => import('@/views/AboutView.vue'),
+    },
+    {
+      path: '/obiettivi',
+      name: 'goals',
+      component: () => import('@/views/GoalsView.vue'),
+    },
+    {
+      path: '/diventa-revisore',
+      name: 'reviewer',
+      component: () => import('@/views/ReviewerView.vue'),
+    },
+    {
       path: '/moderazione',
       name: 'moderation',
       component: () => import('@/views/ModerationView.vue'),

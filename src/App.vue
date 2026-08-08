@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { RouterLink, RouterView } from 'vue-router';
 import { isMobileDevice } from '@/lib/device';
+import { immersive } from '@/lib/uiState';
+import InstallPrompt from '@/components/InstallPrompt.vue';
 
 // La segnalazione è disponibile solo su mobile (fotocamera + posizione).
 const canReport = isMobileDevice();
@@ -11,7 +13,10 @@ const canReport = isMobileDevice();
     class="skip-link"
     href="#main"
   >Salta al contenuto</a>
-  <header class="site-header">
+  <header
+    v-if="!immersive"
+    class="site-header"
+  >
     <div class="container site-header__inner">
       <RouterLink
         to="/"
@@ -26,12 +31,15 @@ const canReport = isMobileDevice();
         <RouterLink to="/">
           Mappa
         </RouterLink>
+        <RouterLink to="/progetto">
+          Progetto
+        </RouterLink>
         <RouterLink
           v-if="canReport"
           to="/segnala"
           class="btn"
         >
-          Segnala un luogo
+          Segnala
         </RouterLink>
       </nav>
     </div>
@@ -46,12 +54,31 @@ const canReport = isMobileDevice();
 
   <footer class="site-footer">
     <div class="container">
+      <nav
+        class="site-footer__nav"
+        aria-label="Pagine del progetto"
+      >
+        <RouterLink to="/progetto">
+          Il progetto
+        </RouterLink>
+        <RouterLink to="/chi-siamo">
+          Chi siamo
+        </RouterLink>
+        <RouterLink to="/obiettivi">
+          Obiettivi
+        </RouterLink>
+        <RouterLink to="/diventa-revisore">
+          Diventa revisore
+        </RouterLink>
+      </nav>
       <p>
         Progetto civico indipendente e non partitico. <strong>Non è un canale di
           emergenza</strong>: per situazioni urgenti chiama i numeri di soccorso.
       </p>
     </div>
   </footer>
+
+  <InstallPrompt />
 </template>
 
 <style scoped>
@@ -87,5 +114,12 @@ const canReport = isMobileDevice();
   border-top: 1px solid var(--color-border);
   color: var(--color-muted);
   font-size: 0.9rem;
+}
+
+.site-footer__nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
 }
 </style>
