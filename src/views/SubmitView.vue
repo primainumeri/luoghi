@@ -532,7 +532,19 @@ onBeforeUnmount(() => {
         </p>
 
         <p class="text-xs text-slate-500">
-          Pubblicando accetti l’informativa sulla privacy. Il nome non viene pubblicato.
+          Pubblicando accetti i
+          <a
+            href="#/termini"
+            target="_blank"
+            rel="noopener"
+            class="underline"
+          >termini</a>
+          e l’<a
+            href="#/privacy"
+            target="_blank"
+            rel="noopener"
+            class="underline"
+          >informativa sulla privacy</a>. Il nome non viene pubblicato.
         </p>
 
         <button

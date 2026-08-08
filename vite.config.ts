@@ -18,7 +18,14 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
         // Le chiamate Supabase (dati/API) non devono mai essere messe in cache.
-        navigateFallbackDenylist: [/^\/rest\//, /^\/auth\//, /^\/storage\//],
+        // I file scaricabili (es. il volantino PDF) non devono essere intercettati
+        // dal fallback SPA, altrimenti il link restituisce index.html.
+        navigateFallbackDenylist: [
+          /^\/rest\//,
+          /^\/auth\//,
+          /^\/storage\//,
+          /\.pdf$/i,
+        ],
       },
       includeAssets: ['favicon.svg'],
       manifest: {

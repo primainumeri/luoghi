@@ -47,6 +47,16 @@ const router = createRouter({
       component: () => import('@/views/ContribuisciView.vue'),
     },
     {
+      path: '/privacy',
+      name: 'privacy',
+      component: () => import('@/views/PrivacyView.vue'),
+    },
+    {
+      path: '/termini',
+      name: 'terms',
+      component: () => import('@/views/TermsView.vue'),
+    },
+    {
       path: '/moderazione',
       name: 'moderation',
       component: () => import('@/views/ModerationView.vue'),

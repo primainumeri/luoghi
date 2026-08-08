@@ -84,6 +84,12 @@ const showHomeButton = computed(
         <RouterLink to="/contribuisci">
           Contribuisci
         </RouterLink>
+        <RouterLink to="/privacy">
+          Privacy
+        </RouterLink>
+        <RouterLink to="/termini">
+          Termini
+        </RouterLink>
       </nav>
       <p>
         Progetto civico indipendente e non partitico. <strong>Non è un canale di
