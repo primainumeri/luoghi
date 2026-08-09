@@ -311,6 +311,11 @@ onBeforeUnmount(() => {
       <p class="mt-2 text-emerald-800">
         Grazie. Riferimento: <strong>{{ reference }}</strong>.
       </p>
+      <p class="mt-2 text-emerald-800">
+        La verifichiamo prima di pubblicarla sulla mappa: controlliamo foto,
+        posizione e coerenza. Se pubblicata, comparirà tra i luoghi. Il tuo
+        nome non viene pubblicato.
+      </p>
       <router-link
         to="/"
         class="mt-6 inline-block font-semibold text-emerald-700"
@@ -508,6 +513,9 @@ onBeforeUnmount(() => {
 
         <label class="grid gap-1.5 font-semibold text-slate-800">
           Il tuo nome
+          <span class="text-xs font-normal text-slate-500">
+            Serve solo per la verifica: non viene pubblicato.
+          </span>
           <input
             v-model="reporterName"
             type="text"
@@ -532,7 +540,7 @@ onBeforeUnmount(() => {
         </p>
 
         <p class="text-xs text-slate-500">
-          Pubblicando accetti i
+          Inviando accetti i
           <a
             href="#/termini"
             target="_blank"
@@ -552,7 +560,7 @@ onBeforeUnmount(() => {
           type="submit"
           :disabled="submitting"
         >
-          {{ submitting ? 'Pubblicazione…' : 'Pubblica' }}
+          {{ submitting ? 'Invio…' : 'Invia' }}
         </button>
       </form>
     </div>

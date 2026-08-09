@@ -7,6 +7,16 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 const DISMISS_KEY = 'pil-install-dismissed';
+// Ritardo prima di proporre l'installazione: evita di coprire le CTA iniziali.
+const SHOW_DELAY_MS = 12000;
+let showTimer: ReturnType<typeof setTimeout> | undefined;
+
+function scheduleShow() {
+  if (showTimer || isStandalone() || alreadyDismissed()) return;
+  showTimer = setTimeout(() => {
+    if (!isStandalone() && !alreadyDismissed()) visible.value = true;
+  }, SHOW_DELAY_MS);
+}
 
 const deferred = ref<BeforeInstallPromptEvent | null>(null);
 const visible = ref(false);
@@ -35,7 +45,7 @@ function alreadyDismissed(): boolean {
 function onBeforeInstallPrompt(e: Event) {
   e.preventDefault();
   deferred.value = e as BeforeInstallPromptEvent;
-  if (!alreadyDismissed()) visible.value = true;
+  scheduleShow();
 }
 
 async function install() {
@@ -63,12 +73,13 @@ onMounted(() => {
   // iOS non emette beforeinstallprompt: mostriamo le istruzioni manuali.
   if (isIos()) {
     iosHint.value = true;
-    visible.value = true;
+    scheduleShow();
   }
 });
 
 onBeforeUnmount(() => {
   window.removeEventListener('beforeinstallprompt', onBeforeInstallPrompt);
+  if (showTimer) clearTimeout(showTimer);
 });
 </script>
 

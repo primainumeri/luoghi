@@ -172,7 +172,8 @@ function initMap() {
   });
   m.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
 
-  // Recupera automaticamente la posizione dal dispositivo (telefono).
+  // La geolocalizzazione è centrale al progetto: all'apertura della mappa
+  // centriamo sulla posizione dell'utente (requisito, soprattutto su mobile).
   const geolocate = new maplibregl.GeolocateControl({
     positionOptions: { enableHighAccuracy: true },
     trackUserLocation: true,
@@ -249,11 +250,17 @@ onBeforeUnmount(() => {
         </RouterLink>
         <button
           type="button"
-          class="map-cta__link"
+          class="map-cta__explore"
           @click="openMap"
         >
           Esplora la mappa
         </button>
+        <RouterLink
+          to="/progetto"
+          class="map-cta__how"
+        >
+          Come funziona &middot; le segnalazioni sono verificate
+        </RouterLink>
         <ShareButtons
           class="map-cta__share"
           :url="SITE_URL"
@@ -344,6 +351,25 @@ onBeforeUnmount(() => {
         Segnala
       </button>
     </div>
+
+    <ul
+      v-if="showMap"
+      class="map-legend"
+      aria-label="Legenda dei tipi di luogo"
+    >
+      <li
+        v-for="t in ctaTypes"
+        :key="t"
+        class="map-legend__item"
+      >
+        <span
+          class="map-legend__dot"
+          :style="{ background: PLACE_TYPE_COLORS[t] }"
+          aria-hidden="true"
+        >{{ PLACE_TYPE_ICONS[t] }}</span>
+        {{ PLACE_TYPE_LABELS[t] }}
+      </li>
+    </ul>
 
     <PlaceModal
       :place="selected"
@@ -455,15 +481,72 @@ onBeforeUnmount(() => {
   font-size: 1.5rem;
 }
 
-.map-cta__link {
-  border: 0;
-  background: none;
+.map-cta__explore {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.25rem;
+  padding: 0.85rem 2rem;
+  border: 2px solid var(--map-navy);
+  border-radius: 999px;
+  background: transparent;
   color: var(--map-navy);
-  font-weight: 700;
-  font-size: 1rem;
-  text-decoration: underline;
+  font-size: 1.1rem;
+  font-weight: 800;
   cursor: pointer;
-  padding: 0.4rem;
+}
+
+.map-cta__how {
+  color: var(--map-navy);
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-decoration: underline;
+}
+
+/* Legenda dei tipi di luogo, sempre visibile sopra la mappa. */
+.map-legend {
+  position: absolute;
+  left: 0.75rem;
+  bottom: 5.25rem;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin: 0;
+  padding: 0.55rem 0.7rem;
+  list-style: none;
+  background: rgba(251, 247, 236, 0.94);
+  border: 1px solid var(--map-border);
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--map-ink);
+}
+
+.map-legend__item {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.map-legend__dot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  flex: none;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  font-size: 0.8rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+@media (min-width: 768px) {
+  .map-legend {
+    bottom: 0.75rem;
+  }
 }
 
 .map-cta__share {
