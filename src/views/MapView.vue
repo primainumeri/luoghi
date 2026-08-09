@@ -702,6 +702,12 @@ onBeforeUnmount(() => {
   line-height: 0;
 }
 
+/* Il cerchio di accuratezza della geolocalizzazione non deve intercettare i
+   click: lasciamo passare i tocchi ai marker che vi finiscono sotto. */
+:deep(.maplibregl-user-location-accuracy-circle) {
+  pointer-events: none;
+}
+
 /* Marker sotto il cursore/il focus in primo piano: consente di raggiungere
    anche quelli parzialmente sovrapposti. */
 :deep(.map-marker:hover),
