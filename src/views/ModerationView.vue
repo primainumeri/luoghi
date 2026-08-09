@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuth } from '@/lib/auth';
 import {
@@ -20,9 +20,8 @@ import { PLACE_TYPE_COLORS, PLACE_TYPE_LABELS, isPlaceType } from '@/lib/labels'
 import type { Category, PublicStatus } from '@/lib/types';
 
 const router = useRouter();
-const { session, signOut } = useAuth();
+const { session, ready, signOut } = useAuth();
 
-const ready = ref(false);
 const loading = ref(false);
 const error = ref<string | null>(null);
 const items = ref<QueueItem[]>([]);
@@ -176,10 +175,14 @@ async function onSignOut() {
   router.push({ name: 'login' });
 }
 
-onMounted(async () => {
-  ready.value = true;
-  if (session.value) await load();
-});
+// La sessione viene ripristinata in modo asincrono: carica appena e disponibile.
+watch(
+  session,
+  (s) => {
+    if (s) load();
+  },
+  { immediate: true },
+);
 </script>
 
 <template>
